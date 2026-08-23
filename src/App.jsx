@@ -111,12 +111,12 @@ export default function App() {
       try {
         const [subjectsData, booksData] =
           await Promise.all([
-            fetch(
-              "/api/matters"
+            apiFetch(
+              "/matters"
             ).then((res) => res.json()),
 
-            fetch(
-              "/api/books"
+            apiFetch(
+              "/books"
             ).then((res) => res.json()),
           ]);
 

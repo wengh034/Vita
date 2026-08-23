@@ -129,8 +129,8 @@ export default function ChaptersList({
 
       try {
         const res =
-          await fetch(
-            `/api/books/${bookId}/chapters`
+          await apiFetch(
+            `/books/${bookId}/chapters`
           );
 
         if (!res.ok) {
