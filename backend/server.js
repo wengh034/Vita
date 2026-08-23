@@ -2,6 +2,7 @@ import express from "express";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import path from "node:path";
+import cors from "cors";
 import { fileURLToPath } from "node:url";
 
 const app = express();
@@ -24,6 +25,22 @@ const log = {
 // ============================================================
 // MIDDLEWARE
 // ============================================================
+
+app.use(cors({
+  origin: [
+    "https://wengh034.github.io",
+    "http://localhost:5173",
+  ],
+}));
+
+app.use((req, res, next) => {
+  res.setHeader(
+    "Access-Control-Allow-Private-Network",
+    "true"
+  );
+
+  next();
+});
 
 app.use(express.json());
 
