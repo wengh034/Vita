@@ -1,0 +1,7 @@
+cloudflared tunnel --url http://localhost:5173 para abrir tunnel cloudflared
+recordar cambiar al url nuevo en vite.config.js para aceptar conexiones
+
+
+
+
+taskkill /F /IM node.exe para matar el server sin ctrl+c

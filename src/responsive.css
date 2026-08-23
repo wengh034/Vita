@@ -1,0 +1,299 @@
+/* ================================== */
+/* Botones de libros: responsive + hover + focus limpio */
+/* ================================== */
+
+.books-btns-container {
+  width: 100%;
+  /* background-color: #006400; */
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: #F3F1EB solid 2px;
+  background-color: #fffffe;
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+}
+
+.btns {
+  display: flex;
+  flex-direction: row;
+  /* justify-content: space-between; */
+  align-items: stretch;
+  width: 100%;
+  height: 100%;
+  
+  /* padding: 0.3rem; */
+  /* box-sizing: border-box; */
+}
+
+
+.books-btn {
+  flex: 1 1 0; /* crecen y se achican equitativamente */
+  padding: 0.5rem;
+  text-align: center;
+  font-size: clamp(0.7rem, 2vw, 1rem); /* texto adaptable */
+  /* border-radius: 6px; */
+  border: none; /* tu borde normal se mantiene sin outline extra */
+  /* background-color: green; */
+  background-color: #fffffe;
+  /* color: white; */
+  color: #1A1A1A;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+
+/*.books-btn:hover {
+   transform: scale(1.05); 
+}*/
+
+.books-btn.selected {
+  /* background-color: #2563eb;
+  color: white; */
+  /* background-color: #2cb67d; */
+  background-color: #2cb67d;
+  color: #fffffe;
+}
+.books-btn-list.selected {
+  /* background-color: #2563eb;
+  color: white; */
+  /* background-color: #6f4ea1; */
+  color: #fffffe;
+}
+
+/* ========================= */
+/* 📱 Móvil (max 600px) */
+@media (max-width: 600px) {
+  .books-btns-container {
+    height: 4em;
+  }
+
+  .books-btn {
+    padding: 0.3rem;
+    font-size: clamp(0.6rem, 3vw, 0.8rem);
+  }
+}
+
+/* ========================= */
+/* 💻 Tablet (600–1024px) */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .books-btn {
+    font-size: clamp(0.8rem, 1.8vw, 0.95rem);
+    padding: 0.4rem;
+  }
+}
+
+/* ========================= */
+/* 🖥️ PC (más de 1024px) */
+@media (min-width: 1025px) {
+  .books-btn {
+    font-size: 1rem;
+    padding: 0.6rem;
+  }
+}
+
+/* ================================== */
+/* 🔹 SOLO quitar outline/halo de focus sin tocar el resto */
+/* ================================== */
+
+.books-btn:focus,
+.books-btn:focus-visible
+/* ,.books-btn:active */
+{ 
+  outline: none;
+  box-shadow: none;
+}
+.books-btn:active {
+  transform: scale(0.97);
+}
+/* 🔹 Evita highlight gris/azul en móviles */
+.books-btn,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ================================== */
+/* 🔹 Botones de respuestas del quiz */
+/* ================================== */
+
+
+.answer-btn {
+  text-align: center;
+  border-radius: 6px;
+  border: none;
+  background-color: #f0f0f0;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+/* última respuesta no necesita margin */
+.answer-btn:last-child {
+  margin-bottom: 0;
+}
+
+
+.answer-btn:hover {
+  transform: scale(1.03);
+}
+
+/* 🔹 Mantener colores al seleccionar */
+.answer-btn.correct {
+  /* background-color: #4caf50; */
+  background-color: #a5ed6e;
+  color: #252529;
+
+}
+
+.answer-btn.incorrect {
+  background-color: #ff4b4b;
+  color: white;
+}
+
+/* 🔹 Solo quitar outline/halo de focus sin afectar otros estilos */
+.answer-btn:focus,
+.answer-btn:focus-visible,
+.answer-btn:active {
+  outline: none;
+  box-shadow: none;
+}
+
+/* 🔹 Evita highlight gris/azul en móviles */
+.answer-btn,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ========================= */
+/* 📱 Ajustes responsive */
+@media (max-width: 600px) {
+  .answer-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: clamp(0.7rem, 3vw, 0.85rem);
+  }
+}
+
+@media (min-width: 601px) and (max-width: 1024px) {
+  .answer-btn {
+    font-size: clamp(0.75rem, 1.8vw, 0.95rem);
+    padding: 0.45rem 0.7rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  .answer-btn {
+    font-size: 1rem;
+    padding: 0.5rem 0.8rem;
+  }
+}
+
+.accept-btn {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: none;
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.accept-btn:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+.answer-btn.selected {
+  background-color: #cce5ff; /* color de selección */
+}
+
+/* ---------------------modal feedback--------------------- */
+.feedback-modal {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #f0f0f0;
+  color: #1A1A1A;
+  padding: 1rem 1.5rem;
+  /* border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25); */
+  z-index: 1000;
+  height: 14rem;
+  max-width: 90%;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.feedback-modal button {
+  padding: 1rem;
+  border-radius: 6px;
+  border: none;
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.feedback-modal button:hover {
+  background-color: #45a049;
+}
+/* bloque fixed flotante */
+/* .book-floating-label {
+  position: fixed;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #7f5af0;
+  color: white;
+  padding: 0.4rem 0.8rem 0 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 999;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  box-sizing: border-box;
+  width: 80%;
+  height: 2.5rem;
+}
+ */
+
+/* prueba de bloque fixed como dropdown */
+/* .book-dropdown-wrapper {
+  position: fixed; 
+  top: 7%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  z-index: 998; 
+} */
+
+/* El menú va debajo del label */
+/* .book-dropdown-menu {
+  position: absolute;
+  top: 3.3rem;
+  left: 10%;
+  width: 80%;
+  background-color:#009f00;
+  border-radius: 8px;
+  padding: 0.3rem 0;
+  box-shadow: 0 2px 8px rgba(0, 100, 0, 1);
+  z-index: 997;
+} */
+
+/* .book-dropdown-item {
+  padding: 0.6rem 1rem;
+  color: white;
+  cursor: pointer;
+  user-select: none;
+} */
+
+/* .book-dropdown-item:hover,
+.book-dropdown-item.selected {
+  background-color: rgba(0, 139, 0, 1);
+} */

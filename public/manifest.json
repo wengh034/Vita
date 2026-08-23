@@ -1,0 +1,15 @@
+{
+  "short_name": "vita",
+  "name": "vita quiz App",
+    "icons": [
+    {
+        "src": "/vite.svg",
+        "sizes": "192x192",
+        "type": "image/svg+xml"
+    }
+    ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#4CAF50",
+  "theme_color": "#4CAF50"
+}

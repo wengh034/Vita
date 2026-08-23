@@ -1,0 +1,56 @@
+{
+  "idBook": 1,
+  "bookName": "Karp 8",
+  "chapter": 4,
+  "chapterName": "contenido 1",
+  "questions": [
+    {
+      "id": 1,
+      "quest": "¿Cuál es la función principal de los ribosomas?",
+      "answers": ["Sintetizar proteínas", "Almacenar energía", "Transportar oxígeno", "Dirigir la división celular"],
+      "correct": 0,
+      "explanation": "Los ribosomas son responsables de la síntesis de proteínas a partir de aminoácidos según el ARN mensajero.",
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "quest": "¿Cuál es la molécula que almacena la información genética?",
+      "answers": ["ARN", "ADN", "Proteína", "Glucógeno"],
+      "correct": 1,
+      "explanation": "El ADN contiene las instrucciones genéticas necesarias para el desarrollo y funcionamiento de los organismos vivos.",
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "quest": "¿Qué orgánulo celular produce energía en forma de ATP?",
+      "answers": ["Mitocondria", "Cloroplasto", "Núcleo", "Aparato de Golgi"],
+      "correct": 0,
+      "explanation": "Las mitocondrias son las encargadas de generar ATP mediante la respiración celular.",
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "quest": "¿Cuál es el componente estructural principal de la pared celular vegetal?",
+      "answers": ["Celulosa", "Quitina", "Lignina", "Peptidoglucano"],
+      "correct": 0,
+      "explanation": "La pared celular de las plantas está formada principalmente por celulosa, que les da rigidez y soporte.",
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "quest": "¿Qué tipo de enlace une los aminoácidos en una proteína?",
+      "answers": ["Iónico", "Puente de hidrógeno", "Peptídico", "Covalente simple"],
+      "correct": 2,
+      "explanation": "Los aminoácidos se unen mediante enlaces peptídicos formados entre el grupo amino y el grupo carboxilo.",
+      "status": "pending"
+    },
+    {
+      "id": 6,
+      "quest": "¿Dónde ocurre la fotosíntesis en las células vegetales?",
+      "answers": ["Mitocondrias", "Cloroplastos", "Ribosomas", "Retículo endoplasmático"],
+      "correct": 1,
+      "explanation": "La fotosíntesis tiene lugar en los cloroplastos, donde la energía solar se convierte en energía química.",
+      "status": "pending"
+    }
+  ]
+}
