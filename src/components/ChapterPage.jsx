@@ -104,8 +104,8 @@ const handleAccept = async () => {
 
     try {
       // 1. Verificar respuesta
-      const res = await fetch(
-        `/api/asks/${currentQuestion.idAsk}/check`,
+      const res = await apiFetch(
+        `/asks/${currentQuestion.idAsk}/check`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

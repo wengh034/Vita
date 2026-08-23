@@ -176,8 +176,8 @@ export async function syncChaptersMeta() {
     const local = await getChapterMeta(m.idChapter);
 
     if (!local || local.version !== m.version) {
-      const countRes = await fetch(
-        `/api/chapters/${m.idChapter}/count`
+      const countRes = await apiFetch(
+        `/chapters/${m.idChapter}/count`
       );
       const { total } = await countRes.json();
 
