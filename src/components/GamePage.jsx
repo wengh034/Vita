@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import AminoacidMatchGame from "./minigames/aminoacidMatch";
+import { apiFetch } from "../config/api.js";
 
 const componentMap = {
   match_symbol: AminoacidMatchGame,
@@ -13,7 +14,7 @@ export default function GamePage() {
   const [config, setConfig] = useState(null);
 
   useEffect(() => {
-    fetch(`/api/modules/${subjectId}`)
+    apiFetch(`/modules/${subjectId}`)
       .then(res => res.json())
       .then(data => {
         const found = data.find(m => m.slug === moduleSlug);

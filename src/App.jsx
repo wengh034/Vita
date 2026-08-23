@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { initUserStats, syncChaptersMeta } from "./progress";
 import { validateStreak } from "./streakValidation.js";
+import { apiFetch } from "./config/api.js";
 
 import BooksList from "./components/BooksList.jsx";
 import ChapterPage from "./components/ChapterPage.jsx";
@@ -36,7 +37,7 @@ export default function App() {
      ========================================================= */
 
   useEffect(() => {
-    fetch("/api/server-date")
+    apiFetch("/server-date")
       .then((res) => res.json())
       .then((data) => setServerDate(data.date))
       .catch((err) =>
@@ -202,7 +203,7 @@ export default function App() {
   return (
     <>
       {dataLoaded && (
-        <Router>
+        <Router basename="/Vita">
           <Routes>
             <Route
               path="/"

@@ -1,34 +1,3 @@
-// const CACHE_NAME = "vita-v1";
-// const urlsToCache = [
-//   "/",
-//   "./index.html",
-//   "/manifest.json",
-// "karp-cap1.json",
-// "karp-cap2.json",
-// "karp-cap3.json",
-// "karp-cap4.json",
-// "karp-cap5.json",
-// "karp-cap6.json",
-// "karp-cap7.json",
-// "karp-cap8.json",
-// "karp-cap9.json",
-// "karp-cap10.json",
-//   "/bookList.json",
-//   "/karp-chapters.json"
-//   // Agregar aquí más recursos que quieras cachear
-// ];
-
-// self.addEventListener("install", (event) => {
-//   event.waitUntil(
-//     caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
-//   );
-// });
-
-// self.addEventListener("fetch", (event) => {
-//   event.respondWith(
-//     caches.match(event.request).then((response) => response || fetch(event.request))
-//   );
-// });
 
 const CACHE_NAME = "vita-cache-v3";
 

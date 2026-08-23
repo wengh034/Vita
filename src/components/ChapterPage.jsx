@@ -8,7 +8,7 @@ import {
   initDB,
   getWrongAnsweredIds
 } from "../progress";
-
+import { apiFetch } from "../config/api.js";
 
 
 export default function ChapterPage() {
@@ -134,7 +134,7 @@ const handleAccept = async () => {
         setLoadingAI(true);
         setShowFeedbackModal(true);
 try {
-          const aiRes = await fetch("/api/ai/explain-answer", {
+          const aiRes = await apiFetch("/ai/explain-answer", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 

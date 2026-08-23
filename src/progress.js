@@ -1,4 +1,5 @@
 import { openDB } from "idb";
+import { apiFetch } from "./config/api.js";
 
 const DB_NAME = "vitadb";
 const DB_VERSION = 15;
@@ -168,7 +169,7 @@ export async function addUserATP(amount) {
 }
 
 export async function syncChaptersMeta() {
-  const metaRes = await fetch("/api/chapters/meta");
+  const metaRes = await apiFetch("/chapters/meta");
   const serverMeta = await metaRes.json();
 
   for (const m of serverMeta) {

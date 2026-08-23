@@ -14,6 +14,7 @@ import {
 import SVGComponent from "./SvgComponent";
 import { useNavigate } from "react-router-dom";
 import Toast from "./Toast";
+import formatQuoteIcon from "../assets/icons/format_quote.svg";
 
 export default function ChaptersList({
   bookId = 1,
@@ -481,7 +482,7 @@ if (loading) {
               >
 
                 <SVGComponent
-                  src="/src/assets/icons/format_quote.svg"
+                  src={formatQuoteIcon}
                   size="1.5rem"
                 />
 

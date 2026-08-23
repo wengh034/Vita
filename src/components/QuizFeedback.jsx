@@ -4,6 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { calculateQuizATP } from "../calculateQuizATP";
 import { addUserATP } from "../progress";
 import SvgComponent from "./SvgComponent";
+import boltIcon from "../assets/icons/bolt.svg";
+import entropyIcon from "../assets/icons/entropy.svg";
+import targetIcon from "../assets/icons/target.svg";
+import timerIcon from "../assets/icons/timer.svg";
+
 export default function QuizFeedback({ questions, startTime }) {
   const hasProcessed = useRef(false);
   const navigate = useNavigate();
@@ -243,7 +248,7 @@ useEffect(() => {
               justifyContent:'center',
               alignItems:'center',
             }}>
-              <div><SvgComponent src="/src/assets/icons/bolt.svg" size="1.5rem"/></div>
+              <div><SvgComponent src={boltIcon} size="1.5rem"/></div>
               <div style={{marginLeft:'0.3em'}}>+{gainedATP}</div>
               
             </div>
@@ -270,7 +275,7 @@ useEffect(() => {
               justifyContent:'center',
               alignItems:'center',
             }}>
-              <div><SvgComponent src="/src/assets/icons/entropy.svg" size="1.5rem"/></div>
+              <div><SvgComponent src={entropyIcon} size="1.5rem"/></div>
               <div style={{marginLeft:'0.3em'}}>-{correct}</div>
             </div>
             </div>
@@ -302,7 +307,7 @@ useEffect(() => {
               alignItems:'center',
               alignContent:'center',
             }}>
-              <div><SvgComponent src="/src/assets/icons/target.svg" size="1.5rem"/></div>
+              <div><SvgComponent src={targetIcon} size="1.5rem"/></div>
               <div style={{marginLeft:'0.3em'}}>{accuracy}%</div>
             </div>
             </div>
@@ -332,7 +337,7 @@ useEffect(() => {
               justifyContent:'center',
               alignItems:'center',
             }}>
-              <div><SvgComponent src="/src/assets/icons/timer.svg" size="1.5rem"/></div>
+              <div><SvgComponent src={timerIcon} size="1.5rem"/></div>
               <div style={{marginLeft:'0.3em'}}>{timeFormatted}</div>
 
             </div>

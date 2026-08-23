@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import GameRenderer from './GamesRenderer';
+import { apiFetch } from '../config/api.js';
 
 const SubjectPage = ({ subjectId }) => {
   const [modules, setModules] = useState([]);
   const [selectedModule, setSelectedModule] = useState(null);
 
   useEffect(() => {
-    fetch(`/api/modules/${subjectId}`)
+    apiFetch(`/modules/${subjectId}`)
       .then(res => res.json())
       .then(data => setModules(data));
       console.log(data)

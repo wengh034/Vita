@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import SVGComponent from "./SvgComponent";
-
+import extensionIcon from "../assets/icons/extension.svg";
+import expandMoreIcon from "../assets/icons/expand_more.svg";
+import { apiFetch } from "../config/api.js";
 const GameRenderer = ({ subjectId }) => {
   const [modules, setModules] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -11,7 +13,7 @@ const GameRenderer = ({ subjectId }) => {
   useEffect(() => {
     if (!subjectId) return;
 
-    fetch(`/api/modules/${subjectId}`)
+    apiFetch(`/modules/${subjectId}`)
       .then(res => res.json())
       .then(data => {
         setModules(data);
@@ -57,10 +59,10 @@ const GameRenderer = ({ subjectId }) => {
           backgroundColor: "#7f5af0",
         }}
       >
-        <SVGComponent src="/src/assets/icons/extension.svg" />
+        <SVGComponent src={extensionIcon} />
         Minijuegos
         <SVGComponent
-          src="/src/assets/icons/expand_more.svg"
+          src={expandMoreIcon}
           size="1.5rem"
           className={`games-dropdown-chevron ${dropdownOpen ? "open" : ""}`}        />
       </button>

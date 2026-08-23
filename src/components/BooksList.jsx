@@ -9,6 +9,9 @@ import { useNavigate } from "react-router-dom";
 import SVGComponent from "./SvgComponent";
 import { getUserStats } from "../progress";
 import GameRenderer from "./GamesRenderer";
+import vitaLogo from "../assets/icons/vita-logo.svg";
+import fireIcon from "../assets/icons/fire.svg";
+import flashIcon from "../assets/icons/flash.svg";
 
 export default function BooksList({
   subjects,
@@ -267,7 +270,7 @@ export default function BooksList({
         <div className="app-header-h4-title">
 
           <SVGComponent
-            src="/src/assets/icons/vita-logo.svg"
+            src={vitaLogo}
             fillColor="#FDFEFE"
           />
 
@@ -314,7 +317,7 @@ export default function BooksList({
               <div className="header-svg">
 
                 <SVGComponent
-                  src="/src/assets/icons/fire.svg"
+                  src={fireIcon}
                   size="0.9em"
                   strokeColor={
                     stats.enthalpy > 0
@@ -337,7 +340,7 @@ export default function BooksList({
               <div className="header-svg">
 
                 <SVGComponent
-                  src="/src/assets/icons/flash.svg"
+                  src={flashIcon}
                   size="0.9em"
                   strokeColor="#7f5af0"
                   fillColor="#a684ff"
