@@ -59,8 +59,8 @@ useEffect(() => {
         };
       }
 
-      const res = await fetch(
-        `/api/chapters/${chapterId}/asks`,
+      const res = await apiFetch(
+        `/chapters/${chapterId}/asks`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
