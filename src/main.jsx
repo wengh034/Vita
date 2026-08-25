@@ -9,11 +9,22 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
+// if ("serviceWorker" in navigator) {
+//   window.addEventListener("load", () => {
+//     navigator.serviceWorker
+//       .register("/service-worker.js")
+//       .then(() => console.log("SW registrado ✔"))
+//       .catch((err) => console.error("SW error:", err));
+//   });
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/service-worker.js")
-      .then(() => console.log("SW registrado ✔"))
-      .catch((err) => console.error("SW error:", err));
+      .register("/Vita/service-worker.js")
+      .then((registration) => {
+        console.log("SW registrado ✅", registration.scope);
+      })
+      .catch((error) => {
+        console.error("SW error:", error);
+      });
   });
 }

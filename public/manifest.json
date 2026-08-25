@@ -1,9 +1,9 @@
 {
   "short_name": "vita",
-  "name": "vita quiz App",
+  "name": "vitapp",
     "icons": [
     {
-        "src": "/vite.svg",
+        "src": "/Vita/vita-logo.svg",
         "sizes": "192x192",
         "type": "image/svg+xml"
     }
