@@ -68,7 +68,7 @@ export default function App() {
     if ("serviceWorker" in navigator) {
       const registerSW = () => {
         navigator.serviceWorker
-          .register("/service-worker.js")
+          .register("/Vita/service-worker.js")
           .then(() =>
             console.log(
               "Service Worker registrado ✅"
