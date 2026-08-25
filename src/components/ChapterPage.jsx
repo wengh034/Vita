@@ -213,9 +213,9 @@ try {
         />
       ) : (
         <div className="quiz-container">
-          <div className="ilustration" style={{ height: "8rem" }}>
-            * ilustración *
-          </div>
+          {/* <div className="ilustration" style={{ height: "8rem" }}>
+            
+          </div> */}
 
           <div className="quiz-box">
             <div className="question-box">

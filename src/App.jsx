@@ -254,7 +254,7 @@ export default function App() {
             style={{
               margin: "0",
               maxWidth: "3.5em",
-              backgroundColor: "green",
+              fontSize: "2.5em",
             }}
           >
             Vita
