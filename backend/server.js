@@ -3,10 +3,14 @@ import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import path from "node:path";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import { fileURLToPath } from "node:url";
+import { requireAdmin } from "./middleware/requireAdmin.js";
 
 const app = express();
-
+app.set("trust proxy", 1);
+app.use(helmet());
 // ============================================================
 // LOGGING
 // ============================================================
@@ -42,7 +46,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+// app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 // Logger global de peticiones API
 app.use((req, res, next) => {
@@ -249,7 +254,18 @@ api.post("/ai/explain-answer", async (req, res) => {
 // ============================================================
 // ADMIN — MASSIVE CREATE
 // ============================================================
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Demasiadas solicitudes. Intenta nuevamente más tarde.",
+  },
+});
 
+api.use("/admin", adminLimiter);
+api.use("/admin", requireAdmin);
 api.post("/admin/questions/batch", async (req, res) => {
   const {
     matter,
@@ -1015,7 +1031,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, "127.0.0.1", () => {
   log.success(
     `Vita backend corriendo en puerto ${PORT}`
   );
