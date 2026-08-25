@@ -1,69 +1,81 @@
+const CACHE_NAME = "vita-pwa-v2";
 
-const CACHE_NAME = "vita-cache-v3";
+// ─────────────────────────────────────────────
+// INSTALL
+// ─────────────────────────────────────────────
 
-// Cache estático: solo archivos del public
-const STATIC_ASSETS = [
-  "/",                 // Vite sirve index.html desde aquí
-  "/index.html",
-  "/manifest.json",
-  "/bookList.json",
-  "/karp-chapters.json",
-  "/subjects.json",
-
-  // Todos tus JSON de capítulos
-  "/karp-cap1.json",
-  "/karp-cap2.json",
-  "/karp-cap3.json",
-  "/karp-cap4.json",
-  "/karp-cap5.json",
-  "/karp-cap6.json",
-  "/karp-cap7.json",
-  "/karp-cap8.json",
-  "/karp-cap9.json",
-  "/karp-cap10.json",
-];
-
-// Instalación
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
-  );
-  self.skipWaiting();
+  console.log("🔧 Instalando Service Worker:", CACHE_NAME);
+  
+  event.waitUntil(self.skipWaiting());
 });
 
-// Activación
+// ─────────────────────────────────────────────
+// ACTIVATE
+// ─────────────────────────────────────────────
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
       )
-    )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch con fallback para SPA
+// ─────────────────────────────────────────────
+// FETCH
+// ─────────────────────────────────────────────
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
-  if (request.method !== "GET") return;
+  if (request.method !== "GET") {
+    return;
+  }
+
+  const url = new URL(request.url);
+
+  // ───────────────────────────────────────────
+  // API
+  // Nunca cachear Express / SQLite
+  // ───────────────────────────────────────────
+
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // ───────────────────────────────────────────
+  // FRONTEND
+  // Network first + cache fallback
+  // ───────────────────────────────────────────
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      return (
-        cached ||
-        fetch(request).catch(() => {
-          // Fallback a index.html si es navegación SPA
-          if (request.headers.get("accept")?.includes("text/html")) {
-            return caches.match("/index.html");
-          }
-        })
-      );
-    })
+    fetch(request)
+      .then((response) => {
+        if (
+          response &&
+          response.status === 200 &&
+          response.type === "basic"
+        ) {
+          const clone = response.clone();
+
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, clone);
+          });
+        }
+
+        return response;
+      })
+      .catch(() => {
+        return caches.match(request);
+      })
   );
 });
