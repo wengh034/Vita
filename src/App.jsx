@@ -1,6 +1,20 @@
-import React, { useEffect, useRef, useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { initUserStats, syncChaptersMeta } from "./progress";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+} from "react-router-dom";
+
+import {
+  initUserStats,
+  syncChaptersMeta,
+} from "./progress";
+
 import { validateStreak } from "./streakValidation.js";
 import { apiFetch } from "./config/api.js";
 
@@ -13,93 +27,196 @@ import "./App.css";
 import "./responsive.css";
 
 export default function App() {
-  const [dataLoaded, setDataLoaded] = useState(false);
-  const [contentReady, setContentReady] = useState(false);
-  const [showLoading, setShowLoading] = useState(true);
 
-  const [subjects, setSubjects] = useState([]);
-  const [books, setBooks] = useState([]);
-  const [serverDate, setServerDate] = useState(null);
+  // =========================================================
+  // DATOS
+  // =========================================================
 
-  const startTimeRef = useRef(performance.now());
-  const loadingFinishedRef = useRef(false);
+  const [dataLoaded, setDataLoaded] =
+    useState(false);
 
-  const [isInstalled, setIsInstalled] = useState(false);
-  /* =========================================================
-     INICIALIZAR STATS
-     ========================================================= */
+  const [contentReady, setContentReady] =
+    useState(false);
+
+  const [showLoading, setShowLoading] =
+    useState(true);
+
+  const [subjects, setSubjects] =
+    useState([]);
+
+  const [books, setBooks] =
+    useState([]);
+
+  const [serverDate, setServerDate] =
+    useState(null);
+
+  // =========================================================
+  // LOADING
+  // =========================================================
+
+  const startTimeRef =
+    useRef(performance.now());
+
+  const loadingFinishedRef =
+    useRef(false);
+
+  // =========================================================
+  // PWA
+  // =========================================================
+
+  const [isInstalled, setIsInstalled] =
+    useState(false);
+
+  const [deferredPrompt, setDeferredPrompt] =
+    useState(null);
+
+  // =========================================================
+  // INICIALIZAR STATS
+  // =========================================================
 
   useEffect(() => {
     initUserStats();
     syncChaptersMeta();
   }, []);
 
-  /* =========================================================
-     FECHA DEL SERVIDOR
-     ========================================================= */
+  // =========================================================
+  // PWA
+  // =========================================================
 
   useEffect(() => {
+
+    // -------------------------------------------------------
+    // Detectar si Vita ya está instalada
+    // -------------------------------------------------------
+
+    const standalone =
+      window.matchMedia(
+        "(display-mode: standalone)"
+      ).matches ||
+      window.navigator.standalone === true;
+
+    if (standalone) {
+
+      console.log(
+        "📱 Vita está ejecutándose como PWA"
+      );
+
+      setIsInstalled(true);
+
+    } else {
+
+      console.log(
+        "🌐 Vita está ejecutándose en navegador"
+      );
+
+    }
+
+    // -------------------------------------------------------
+    // beforeinstallprompt
+    // -------------------------------------------------------
+
+    const handleBeforeInstallPrompt = (
+      event
+    ) => {
+
+      console.log(
+        "🔥 beforeinstallprompt DISPARADO"
+      );
+
+      event.preventDefault();
+
+      setDeferredPrompt(event);
+    };
+
+    // -------------------------------------------------------
+    // appinstalled
+    // -------------------------------------------------------
+
+    const handleAppInstalled = () => {
+
+      console.log(
+        "✅ Vita fue instalada"
+      );
+
+      setIsInstalled(true);
+
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener(
+      "beforeinstallprompt",
+      handleBeforeInstallPrompt
+    );
+
+    window.addEventListener(
+      "appinstalled",
+      handleAppInstalled
+    );
+
+    return () => {
+
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
+
+      window.removeEventListener(
+        "appinstalled",
+        handleAppInstalled
+      );
+    };
+
+  }, []);
+
+  // =========================================================
+  // FECHA DEL SERVIDOR
+  // =========================================================
+
+  useEffect(() => {
+
     apiFetch("/server-date")
       .then((res) => res.json())
-      .then((data) => setServerDate(data.date))
-      .catch((err) =>
+      .then((data) => {
+        setServerDate(data.date);
+      })
+      .catch((err) => {
+
         console.error(
           "Error obteniendo fecha del servidor",
           err
-        )
-      );
+        );
+
+      });
+
   }, []);
 
-  /* =========================================================
-     VALIDAR RACHA
-     ========================================================= */
+  // =========================================================
+  // VALIDAR RACHA
+  // =========================================================
 
   useEffect(() => {
+
     if (!serverDate) return;
 
     validateStreak(serverDate);
+
   }, [serverDate]);
 
-  /* =========================================================
-     CONFIGURACIÓN INICIAL + DATOS
-     ========================================================= */
+  // =========================================================
+  // CONFIGURACIÓN INICIAL + DATOS
+  // =========================================================
 
   useEffect(() => {
+
     let cancelled = false;
 
-    if ("serviceWorker" in navigator) {
-      const registerSW = () => {
-        navigator.serviceWorker
-          .register("/Vita/service-worker.js")
-          .then(() =>
-            console.log(
-              "Service Worker registrado ✅"
-            )
-          )
-          .catch((err) =>
-            console.error(
-              "Error registrando SW ❌",
-              err
-            )
-          );
-      };
-
-      if (document.readyState === "complete") {
-        registerSW();
-      } else {
-        window.addEventListener(
-          "load",
-          registerSW,
-          { once: true }
-        );
-      }
-    }
-
     const setAppHeight = () => {
+
       document.documentElement.style.setProperty(
         "--app-height",
         `${window.innerHeight}px`
       );
+
     };
 
     setAppHeight();
@@ -110,17 +227,21 @@ export default function App() {
     );
 
     const loadData = async () => {
-      try {
-        const [subjectsData, booksData] =
-          await Promise.all([
-            apiFetch(
-              "/matters"
-            ).then((res) => res.json()),
 
-            apiFetch(
-              "/books"
-            ).then((res) => res.json()),
-          ]);
+      try {
+
+        const [
+          subjectsData,
+          booksData,
+        ] = await Promise.all([
+
+          apiFetch("/matters")
+            .then((res) => res.json()),
+
+          apiFetch("/books")
+            .then((res) => res.json()),
+
+        ]);
 
         if (cancelled) return;
 
@@ -128,7 +249,16 @@ export default function App() {
         setBooks(booksData);
 
         setDataLoaded(true);
+
+        // IMPORTANTE:
+        //
+        // Ya no dependemos de BooksList
+        // para finalizar el loading.
+
+        setContentReady(true);
+
       } catch (err) {
+
         console.error(
           "Error cargando datos iniciales",
           err
@@ -138,88 +268,100 @@ export default function App() {
 
         setDataLoaded(true);
         setContentReady(true);
+
       }
+
     };
 
     loadData();
 
     return () => {
+
       cancelled = true;
 
       window.removeEventListener(
         "resize",
         setAppHeight
       );
+
     };
+
   }, []);
 
-  /* =========================================================
-     CONTROL DEL LOADER
-     ========================================================= */
+  // =========================================================
+  // CONTROL DEL LOADER
+  // =========================================================
 
   useEffect(() => {
+
     if (!contentReady) return;
-    if (loadingFinishedRef.current) return;
+
+    if (loadingFinishedRef.current) {
+      return;
+    }
 
     const elapsed =
       performance.now() -
       startTimeRef.current;
 
     const remaining =
-      Math.max(0, 3000 - elapsed);
+      Math.max(
+        0,
+        3000 - elapsed
+      );
 
     const timer = setTimeout(() => {
-      if (loadingFinishedRef.current) {
+
+      if (
+        loadingFinishedRef.current
+      ) {
         return;
       }
 
-      /*
-       * Dos frames:
-       *
-       * Frame 1 → React/DOM puede actualizarse
-       * Frame 2 → navegador tiene oportunidad de pintar
-       */
       requestAnimationFrame(() => {
+
         requestAnimationFrame(() => {
-          loadingFinishedRef.current = true;
+
+          loadingFinishedRef.current =
+            true;
+
           setShowLoading(false);
+
         });
+
       });
+
     }, remaining);
 
     return () => {
       clearTimeout(timer);
     };
+
   }, [contentReady]);
-  /* verficación de instalación de la app */
-  useEffect(() => {
-  const standalone = window.matchMedia(
-    "(display-mode: standalone)"
-  ).matches;
 
-  if (standalone) {
-    setIsInstalled(true);
-  }
-}, []);
-
-  /* =========================================================
-     RENDER
-     ========================================================= */
+  // =========================================================
+  // RENDER
+  // =========================================================
 
   return (
     <>
+
+      {/* =====================================================
+          APLICACIÓN
+          ===================================================== */}
+
       {isInstalled && dataLoaded && (
+
         <Router basename="/Vita">
+
           <Routes>
+
             <Route
               path="/"
               element={
                 <BooksList
                   subjects={subjects}
                   books={books}
-                  onReady={() =>
-                    setContentReady(true)
-                  }
                 />
               }
             />
@@ -233,15 +375,34 @@ export default function App() {
               path="/game/:subjectId/:moduleSlug"
               element={<GamePage />}
             />
+
           </Routes>
+
         </Router>
+
       )}
-{isInstalled === false && !showLoading && (
-  <InstallPage
-    onInstalled={() => setIsInstalled(true)}
-  />
-)}
+
+      {/* =====================================================
+          INSTALACIÓN
+          ===================================================== */}
+
+      {!isInstalled && !showLoading && (
+
+        <InstallPage
+          deferredPrompt={deferredPrompt}
+          onInstalled={() => {
+            setIsInstalled(true);
+          }}
+        />
+
+      )}
+
+      {/* =====================================================
+          LOADING
+          ===================================================== */}
+
       {showLoading && (
+
         <div
           style={{
             position: "fixed",
@@ -250,6 +411,7 @@ export default function App() {
 
             display: "flex",
             flexDirection: "column",
+
             justifyContent: "center",
             alignItems: "center",
 
@@ -259,6 +421,7 @@ export default function App() {
             backgroundColor: "#7f5af0",
           }}
         >
+
           <div
             className="Bobbleboddy-font"
             style={{
@@ -269,8 +432,11 @@ export default function App() {
           >
             Vita
           </div>
+
         </div>
+
       )}
+
     </>
   );
 }

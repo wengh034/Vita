@@ -1,102 +1,104 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-export default function InstallPage({ onInstalled }) {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [installed, setInstalled] = useState(false);
+export default function InstallPage({
+  deferredPrompt,
+  onInstalled,
+}) {
 
-  useEffect(() => {
-    const isStandalone = window.matchMedia(
-      "(display-mode: standalone)"
-    ).matches;
+  const [installing, setInstalling] =
+    useState(false);
 
-    if (isStandalone) {
-      setInstalled(true);
-      onInstalled?.();
+  const handleInstall = async () => {
+
+    if (!deferredPrompt) {
+
+      console.warn(
+        "⚠️ beforeinstallprompt todavía no está disponible"
+      );
+
       return;
     }
 
-    const handler = (event) => {
-        console.log("🔥 beforeinstallprompt DISPARADO");
-      event.preventDefault();
-      setDeferredPrompt(event);
-    };
-    console.log("👀 Esperando beforeinstallprompt...");
+    try {
 
-    window.addEventListener(
-      "beforeinstallprompt",
-      
-      handler
-      
-    );
+      setInstalling(true);
 
-    return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handler
+      console.log(
+        "📲 Abriendo ventana de instalación..."
       );
-    };
-  }, [onInstalled]);
 
-  useEffect(() => {
-    const handleAppInstalled = () => {
-      setInstalled(true);
-      setDeferredPrompt(null);
-      onInstalled?.();
-    };
+      deferredPrompt.prompt();
 
-    window.addEventListener(
-      "appinstalled",
-      handleAppInstalled
-    );
+      const {
+        outcome,
+      } = await deferredPrompt.userChoice;
 
-    return () => {
-      window.removeEventListener(
-        "appinstalled",
-        handleAppInstalled
+      console.log(
+        "Resultado de instalación:",
+        outcome
       );
-    };
-  }, [onInstalled]);
 
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
+      if (
+        outcome === "accepted"
+      ) {
 
-    deferredPrompt.prompt();
+        console.log(
+          "✅ Usuario aceptó instalar Vita"
+        );
 
-    const { outcome } =
-      await deferredPrompt.userChoice;
+        onInstalled?.();
 
-    if (outcome === "accepted") {
-      setInstalled(true);
-      onInstalled?.();
+      } else {
+
+        console.log(
+          "❌ Usuario rechazó instalar Vita"
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "❌ Error durante la instalación:",
+        error
+      );
+
+    } finally {
+
+      setInstalling(false);
+
     }
 
-    setDeferredPrompt(null);
   };
 
-  if (installed) return null;
-
   return (
-    <div className="install-page" >
 
-      <h1 className="Bobbleboddy-font">Vita</h1>
+    <div className="install-page">
+
+      <h1 className="Bobbleboddy-font">
+        Vita
+      </h1>
 
       <p>
         Instala Vita para comenzar.
       </p>
-<button
-  onClick={handleInstall}
-  disabled={!deferredPrompt}
->
-  {deferredPrompt
-    ? "Instalar Vita"
-    : "Esperando instalación..."}
-</button>
-      {/* <button
+
+      <button
         onClick={handleInstall}
-        disabled={!deferredPrompt}
+        disabled={
+          !deferredPrompt ||
+          installing
+        }
       >
-        Instalar Vita
-      </button> */}
+
+        {installing
+          ? "Instalando..."
+          : deferredPrompt
+            ? "Instalar Vita"
+            : "Esperando instalación..."}
+
+      </button>
+
     </div>
 
   );
