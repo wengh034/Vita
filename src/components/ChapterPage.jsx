@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import QuizFeedback from "./QuizFeedback";
 import {
   saveQuizAnswer,
@@ -192,24 +192,45 @@ try {
       setShowQuizFeedback(true);
     }
   };
+  const navigate = useNavigate();
 
   return (
     <div className="ask-renderer">
       {!showQuizFeedback && (
-        <Link
-          to="/"
-          className="back-link"
-          style={{
-            textDecoration: "none",
-            color: "#1a1a1a",
-            display: "flex",
-            // alignItems: "center",
-            gap: "0.2rem",
-            margin: "0.5rem",
-          }}
-        >
-          <span className="material-symbols-outlined">arrow_back</span>
-        </Link>
+        // <Link
+        //   to="/"
+        //   className="back-link"
+        //   style={{
+        //     textDecoration: "none",
+        //     color: "#1a1a1a",
+        //     display: "flex",
+        //     // alignItems: "center",
+        //     gap: "0.2rem",
+        //     margin: "0.5rem",
+        //   }}
+        // >
+        //   <span className="material-symbols-outlined">arrow_back</span>
+        // </Link>
+        <button
+  onClick={() => navigate(-1)}
+  className="back-link"
+  style={{
+    background: "none",
+    border: "none",
+    padding: 0,
+    textDecoration: "none",
+    color: "#1a1a1a",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.2rem",
+    margin: "0.5rem",
+    cursor: "pointer",
+  }}
+>
+  <span className="material-symbols-outlined">
+    arrow_back
+  </span>
+</button>
       )}
 
       {showQuizFeedback ? (
