@@ -4,15 +4,88 @@ export default function InstallPage({
   deferredPrompt,
 }) {
   const [installing, setInstalling] = useState(false);
+
   const [installationCompleted, setInstallationCompleted] =
-    useState(false);
+    useState(() => {
+      return (
+        localStorage.getItem("vita-installed") ===
+        "true"
+      );
+    });
+
+  // =========================================================
+  // DETECTAR NAVEGADOR
+  // =========================================================
+
+  const getBrowserName = () => {
+
+    const ua = navigator.userAgent;
+
+    if (ua.includes("Edg/")) {
+      return "Microsoft Edge";
+    }
+
+    if (
+      ua.includes("OPR/") ||
+      ua.includes("Opera")
+    ) {
+      return "Opera";
+    }
+
+    if (ua.includes("Brave")) {
+      return "Brave";
+    }
+
+    if (
+      ua.includes("Firefox") &&
+      !ua.includes("Seamonkey")
+    ) {
+      return "Firefox";
+    }
+
+    if (
+      ua.includes("Safari") &&
+      !ua.includes("Chrome")
+    ) {
+      return "Safari";
+    }
+
+    if (
+      ua.includes("Chrome") &&
+      !ua.includes("Edg") &&
+      !ua.includes("OPR")
+    ) {
+      return "Google Chrome";
+    }
+
+    return "este navegador";
+  };
+
+  const browserName = getBrowserName();
+
+  const isChrome =
+    browserName === "Google Chrome";
+
+  // =========================================================
+  // INSTALACIÓN REAL
+  // =========================================================
 
   useEffect(() => {
+
     const handleAppInstalled = () => {
-      console.log("✅ Vita fue instalada");
+
+      console.log(
+        "✅ Vita fue instalada"
+      );
+
+      localStorage.setItem(
+        "vita-installed",
+        "true"
+      );
 
       setInstallationCompleted(true);
       setInstalling(false);
+
     };
 
     window.addEventListener(
@@ -21,22 +94,28 @@ export default function InstallPage({
     );
 
     return () => {
+
       window.removeEventListener(
         "appinstalled",
         handleAppInstalled
       );
+
     };
+
   }, []);
 
+  // =========================================================
+  // INSTALAR
+  // =========================================================
+
   const handleInstall = async () => {
+
     if (!deferredPrompt) {
-      console.warn(
-        "⚠️ beforeinstallprompt todavía no está disponible"
-      );
       return;
     }
 
     try {
+
       setInstalling(true);
 
       deferredPrompt.prompt();
@@ -49,29 +128,47 @@ export default function InstallPage({
         outcome
       );
 
+      // -----------------------------------------------------
+      // USUARIO RECHAZÓ
+      // -----------------------------------------------------
+
       if (outcome === "dismissed") {
+
+        console.log(
+          "❌ Usuario canceló la instalación"
+        );
+
         setInstalling(false);
+
+        return;
       }
 
-      // Si fue accepted, esperamos al evento
-      // "appinstalled" para confirmar realmente
-      // que la instalación terminó.
+      // -----------------------------------------------------
+      // Si aceptó:
+      //
+      // NO cambiamos el estado aquí.
+      // Esperamos "appinstalled".
+      // -----------------------------------------------------
 
     } catch (error) {
+
       console.error(
         "❌ Error durante la instalación:",
         error
       );
 
       setInstalling(false);
+
     }
+
   };
 
   // =========================================================
-  // INSTALACIÓN COMPLETADA
+  // YA INSTALADA
   // =========================================================
 
   if (installationCompleted) {
+
     return (
       <div className="install-page">
 
@@ -80,7 +177,7 @@ export default function InstallPage({
         </h1>
 
         <h2>
-          ¡Vita se instaló correctamente! 🎉
+          ¡Vita ya está instalada! 🎉
         </h2>
 
         <p>
@@ -89,7 +186,7 @@ export default function InstallPage({
         </p>
 
         <p>
-          Esta ventana puede cerrarse.
+          Puedes cerrar esta ventana.
         </p>
 
       </div>
@@ -97,7 +194,43 @@ export default function InstallPage({
   }
 
   // =========================================================
-  // INSTALACIÓN NORMAL
+  // NAVEGADOR NO COMPATIBLE
+  // =========================================================
+
+  if (!isChrome) {
+
+    return (
+      <div className="install-page">
+
+        <h1 className="Bobbleboddy-font">
+          Vita
+        </h1>
+
+        <h2>
+          Navegador no compatible
+        </h2>
+
+        <p>
+          Vita necesita <strong>Google Chrome</strong>{" "}
+          para poder instalarse correctamente.
+        </p>
+
+        <p>
+          Actualmente estás usando{" "}
+          <strong>{browserName}</strong>.
+        </p>
+
+        <p>
+          Abre Vita desde Google Chrome para
+          instalarla como aplicación.
+        </p>
+
+      </div>
+    );
+  }
+
+  // =========================================================
+  // INSTALACIÓN
   // =========================================================
 
   return (
@@ -118,11 +251,13 @@ export default function InstallPage({
           installing
         }
       >
+
         {installing
           ? "Instalando..."
           : deferredPrompt
             ? "Instalar Vita"
             : "Esperando instalación..."}
+
       </button>
 
     </div>
