@@ -7,6 +7,7 @@ import { apiFetch } from "./config/api.js";
 import BooksList from "./components/BooksList.jsx";
 import ChapterPage from "./components/ChapterPage.jsx";
 import GamePage from "./components/GamePage.jsx";
+import InstallPage from "./components/installPage.jsx";
 
 import "./App.css";
 import "./responsive.css";
@@ -23,6 +24,7 @@ export default function App() {
   const startTimeRef = useRef(performance.now());
   const loadingFinishedRef = useRef(false);
 
+  const [isInstalled, setIsInstalled] = useState(false);
   /* =========================================================
      INICIALIZAR STATS
      ========================================================= */
@@ -125,12 +127,6 @@ export default function App() {
         setSubjects(subjectsData);
         setBooks(booksData);
 
-        /*
-         * MUY IMPORTANTE:
-         *
-         * El contenido empieza a montarse AHORA.
-         * No esperamos los 3 segundos.
-         */
         setDataLoaded(true);
       } catch (err) {
         console.error(
@@ -195,6 +191,16 @@ export default function App() {
       clearTimeout(timer);
     };
   }, [contentReady]);
+  /* verficación de instalación de la app */
+  useEffect(() => {
+  const standalone = window.matchMedia(
+    "(display-mode: standalone)"
+  ).matches;
+
+  if (standalone) {
+    setIsInstalled(true);
+  }
+}, []);
 
   /* =========================================================
      RENDER
@@ -202,7 +208,7 @@ export default function App() {
 
   return (
     <>
-      {dataLoaded && (
+      {isInstalled && dataLoaded && (
         <Router basename="/Vita">
           <Routes>
             <Route
@@ -230,7 +236,11 @@ export default function App() {
           </Routes>
         </Router>
       )}
-
+{isInstalled === false && !showLoading && (
+  <InstallPage
+    onInstalled={() => setIsInstalled(true)}
+  />
+)}
       {showLoading && (
         <div
           style={{
