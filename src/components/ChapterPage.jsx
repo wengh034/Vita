@@ -84,7 +84,7 @@ useEffect(() => {
 }, [chapterId, mode]);
 
   const currentQuestion = questions[currentIndex];
-  if (!currentQuestion) return <p>Cargando preguntas...</p>;
+  if (!currentQuestion) return <span className="game-loader"></span>; 
 
   const handleSelectAnswer = (idx) => {
     if (!answerSelected) setSelectedIndex(idx);
@@ -280,7 +280,7 @@ try {
       {loadingAI ? (
         <p style={{ fontStyle: "italic", opacity: 0.8 }}>
           Generando explicación según el Karp 8va ed... (esto puede tardar unos segundos)
-          <span className="scientist-loader"></span>
+          {/* <span className="scientist-loader"></span> */}
           {/* <span className="game-loader"></span> */}
 
         </p>
