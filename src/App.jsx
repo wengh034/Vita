@@ -390,9 +390,9 @@ export default function App() {
 
         <InstallPage
           deferredPrompt={deferredPrompt}
-          onInstalled={() => {
-            setIsInstalled(true);
-          }}
+          // onInstalled={() => {
+          //   setIsInstalled(true);
+          // }}
         />
 
       )}

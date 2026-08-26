@@ -1,78 +1,106 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function InstallPage({
   deferredPrompt,
-  onInstalled,
 }) {
-
-  const [installing, setInstalling] =
+  const [installing, setInstalling] = useState(false);
+  const [installationCompleted, setInstallationCompleted] =
     useState(false);
 
+  useEffect(() => {
+    const handleAppInstalled = () => {
+      console.log("✅ Vita fue instalada");
+
+      setInstallationCompleted(true);
+      setInstalling(false);
+    };
+
+    window.addEventListener(
+      "appinstalled",
+      handleAppInstalled
+    );
+
+    return () => {
+      window.removeEventListener(
+        "appinstalled",
+        handleAppInstalled
+      );
+    };
+  }, []);
+
   const handleInstall = async () => {
-
     if (!deferredPrompt) {
-
       console.warn(
         "⚠️ beforeinstallprompt todavía no está disponible"
       );
-
       return;
     }
 
     try {
-
       setInstalling(true);
-
-      console.log(
-        "📲 Abriendo ventana de instalación..."
-      );
 
       deferredPrompt.prompt();
 
-      const {
-        outcome,
-      } = await deferredPrompt.userChoice;
+      const { outcome } =
+        await deferredPrompt.userChoice;
 
       console.log(
         "Resultado de instalación:",
         outcome
       );
 
-      if (
-        outcome === "accepted"
-      ) {
-
-        console.log(
-          "✅ Usuario aceptó instalar Vita"
-        );
-
-        onInstalled?.();
-
-      } else {
-
-        console.log(
-          "❌ Usuario rechazó instalar Vita"
-        );
-
+      if (outcome === "dismissed") {
+        setInstalling(false);
       }
 
-    } catch (error) {
+      // Si fue accepted, esperamos al evento
+      // "appinstalled" para confirmar realmente
+      // que la instalación terminó.
 
+    } catch (error) {
       console.error(
         "❌ Error durante la instalación:",
         error
       );
 
-    } finally {
-
       setInstalling(false);
-
     }
-
   };
 
-  return (
+  // =========================================================
+  // INSTALACIÓN COMPLETADA
+  // =========================================================
 
+  if (installationCompleted) {
+    return (
+      <div className="install-page">
+
+        <h1 className="Bobbleboddy-font">
+          Vita
+        </h1>
+
+        <h2>
+          ¡Vita se instaló correctamente! 🎉
+        </h2>
+
+        <p>
+          Busca <strong>Vita</strong> entre tus
+          aplicaciones para abrirla.
+        </p>
+
+        <p>
+          Esta ventana puede cerrarse.
+        </p>
+
+      </div>
+    );
+  }
+
+  // =========================================================
+  // INSTALACIÓN NORMAL
+  // =========================================================
+
+  return (
     <div className="install-page">
 
       <h1 className="Bobbleboddy-font">
@@ -90,16 +118,13 @@ export default function InstallPage({
           installing
         }
       >
-
         {installing
           ? "Instalando..."
           : deferredPrompt
             ? "Instalar Vita"
             : "Esperando instalación..."}
-
       </button>
 
     </div>
-
   );
 }
