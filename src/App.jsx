@@ -86,7 +86,7 @@ export default function App() {
   useEffect(() => {
 
     // -------------------------------------------------------
-    // Detectar si Vita ya está instalada
+    // Detectar si Vita YA está ejecutándose como PWA
     // -------------------------------------------------------
 
     const standalone =
@@ -123,34 +123,20 @@ export default function App() {
         "🔥 beforeinstallprompt DISPARADO"
       );
 
+      // Evita que el navegador muestre
+      // automáticamente su propio aviso.
+
       event.preventDefault();
 
+      // Guardamos el evento para que
+      // InstallPage pueda utilizarlo.
+
       setDeferredPrompt(event);
-    };
-
-    // -------------------------------------------------------
-    // appinstalled
-    // -------------------------------------------------------
-
-    const handleAppInstalled = () => {
-
-      console.log(
-        "✅ Vita fue instalada"
-      );
-
-      setIsInstalled(true);
-
-      setDeferredPrompt(null);
     };
 
     window.addEventListener(
       "beforeinstallprompt",
       handleBeforeInstallPrompt
-    );
-
-    window.addEventListener(
-      "appinstalled",
-      handleAppInstalled
     );
 
     return () => {
@@ -160,10 +146,6 @@ export default function App() {
         handleBeforeInstallPrompt
       );
 
-      window.removeEventListener(
-        "appinstalled",
-        handleAppInstalled
-      );
     };
 
   }, []);
@@ -177,7 +159,9 @@ export default function App() {
     apiFetch("/server-date")
       .then((res) => res.json())
       .then((data) => {
+
         setServerDate(data.date);
+
       })
       .catch((err) => {
 
@@ -250,10 +234,7 @@ export default function App() {
 
         setDataLoaded(true);
 
-        // IMPORTANTE:
-        //
-        // Ya no dependemos de BooksList
-        // para finalizar el loading.
+        // El loading ya no depende de BooksList.
 
         setContentReady(true);
 
@@ -334,7 +315,9 @@ export default function App() {
     }, remaining);
 
     return () => {
+
       clearTimeout(timer);
+
     };
 
   }, [contentReady]);
@@ -390,9 +373,6 @@ export default function App() {
 
         <InstallPage
           deferredPrompt={deferredPrompt}
-          // onInstalled={() => {
-          //   setIsInstalled(true);
-          // }}
         />
 
       )}
