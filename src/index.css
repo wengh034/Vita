@@ -114,7 +114,7 @@ body {
   }
 }
 
-/* animación de loading gamer ekisde*/
+/* animación de loading gamer ekisde//////////////////
 .game-loader {
   --color-1: #16C56F;
   --color-2: rgba(255, 255, 255, 0);
@@ -180,12 +180,163 @@ body {
   }
 }
 
-/* @Hide */
+/* @Hide ////////
+
 [data-ref]:has(span.game-loader) {
   justify-content: normal;
 }
 /* @HideEnds */
+.game-loading {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
 
+  width: 100%;
+  height: 12px;
+
+  display: flex;
+  justify-content: flex-end;
+
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.game-loader {
+  --color-1: #16C56F;
+  --color-2: rgba(255, 255, 255, 0);
+  --size: 1px;
+
+  width: 0;
+  height: calc(4.8 * var(--size));
+
+  display: block;
+  position: relative;
+
+  background: var(--color-1);
+
+  box-shadow:
+    0 0 calc(10 * var(--size))
+    var(--color-2);
+
+  box-sizing: border-box;
+
+  animation: animFw 8s linear forwards;
+}
+
+
+/* CHISPAS */
+
+.game-loader::after,
+.game-loader::before {
+  content: '';
+
+  width: calc(10 * var(--size));
+  height: calc(1 * var(--size));
+
+  background: var(--color-1);
+
+  position: absolute;
+
+  top: calc(9 * var(--size));
+  right: calc(-2 * var(--size));
+
+  opacity: 0;
+
+  box-sizing: border-box;
+}
+
+
+/* Chispa inferior */
+
+.game-loader::after {
+  transform:
+    rotate(-45deg)
+    translateX(0);
+
+  animation:
+    coli1 0.3s linear infinite;
+}
+
+
+/* Chispa superior */
+
+.game-loader::before {
+  top: calc(-4 * var(--size));
+
+  transform:
+    rotate(45deg)
+    translateX(0);
+
+  animation:
+    coli2 0.3s linear infinite;
+}
+
+
+/* BARRA: DERECHA → IZQUIERDA */
+
+@keyframes animFw {
+
+  0% {
+    width: 0;
+  }
+
+  100% {
+    width: 100%;
+  }
+
+}
+
+
+/* CHISPA INFERIOR */
+
+@keyframes coli1 {
+
+  0% {
+    transform:
+      rotate(-45deg)
+      translateX(0);
+
+    opacity: 0.7;
+  }
+
+  100% {
+    transform:
+      rotate(-45deg)
+      translateX(
+        calc(-45 * var(--size))
+      );
+
+    opacity: 0;
+  }
+
+}
+
+
+/* CHISPA SUPERIOR */
+
+@keyframes coli2 {
+
+  0% {
+    transform:
+      rotate(45deg)
+      translateX(0);
+
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      rotate(45deg)
+      translateX(
+        calc(-45 * var(--size))
+      );
+
+    opacity: 0.7;
+  }
+
+}
+/*end game loader*/
 a {
   font-weight: 500;
   color: #646cff;

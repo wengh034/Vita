@@ -84,7 +84,14 @@ useEffect(() => {
 }, [chapterId, mode]);
 
   const currentQuestion = questions[currentIndex];
-  if (!currentQuestion) return <span className="game-loader"></span>; 
+  // if (!currentQuestion) return <p>Cargando preguntas...</p>; 
+  if (!currentQuestion) {
+  return (
+    <div className="game-loading">
+      <span className="game-loader"></span>
+    </div>
+  );
+}
 
   const handleSelectAnswer = (idx) => {
     if (!answerSelected) setSelectedIndex(idx);
