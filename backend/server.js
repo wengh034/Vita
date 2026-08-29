@@ -105,7 +105,19 @@ api.get("/health", (req, res) => {
 // registro y consulta de users
 // ============================================================
 // Servidor (Node.js + Express)
-
+api.get("/users", async (req, res) => {
+  try {
+    // Obtenemos los usuarios (evitando traer datos sensibles si los hubiera)
+    const users = await db.all(
+      "SELECT uuid, nickname, status, last_login FROM users ORDER BY last_login DESC"
+    );
+    
+    res.json(users);
+  } catch (error) {
+    console.error("Error al obtener usuarios:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
 function generateUniqueIntUuid() {
   let isUnique = false;
   let candidateUuid;
@@ -119,7 +131,7 @@ function generateUniqueIntUuid() {
   return candidateUuid;
 }
 
-app.post("/users/register", (req, res) => {
+api.post("/users/register", async (req, res) => {
   const { nickname } = req.body;
 
   if (!nickname || nickname.trim() === "") {
@@ -129,10 +141,11 @@ app.post("/users/register", (req, res) => {
   const cleanNickname = nickname.trim();
 
   try {
-    // 1. Verificar si el nombre de usuario ya existe
-    const existingUser = db
-      .prepare("SELECT uuid, nickname, status FROM users WHERE nickname = ?")
-      .get(cleanNickname);
+    // 1. Verificar si el nombre de usuario ya existe (usando db.get directamente)
+    const existingUser = await db.get(
+      "SELECT uuid, nickname, status FROM users WHERE nickname = ?",
+      [cleanNickname]
+    );
 
     if (existingUser) {
       return res.json({
@@ -143,14 +156,14 @@ app.post("/users/register", (req, res) => {
       });
     }
 
-    // 2. Generar el UUID entero en el momento
-    const newUuid = generateUniqueIntUuid();
+    // 2. Generar el UUID entero (esperando la promesa)
+    const newUuid = await generateUniqueIntUuid();
 
-    // 3. Insertar el nuevo usuario
-    db.prepare(`
-      INSERT INTO users (uuid, nickname, status)
-      VALUES (?, ?, 'pending')
-    `).run(newUuid, cleanNickname);
+    // 3. Insertar el nuevo usuario (usando db.run directamente)
+    await db.run(
+      "INSERT INTO users (uuid, nickname, status) VALUES (?, ?, 'pending')",
+      [newUuid, cleanNickname]
+    );
 
     return res.status(201).json({
       uuid: newUuid,
@@ -163,34 +176,40 @@ app.post("/users/register", (req, res) => {
     return res.status(500).json({ error: "Error interno del servidor" });
   }
 });
-app.get("/users/status/:uuid", (req, res) => {
-  const uuidInt = parseInt(req.params.uuid, 10);
+api.get("/users/status/:uuid", async (req, res) => {
+  try {
+    const uuidInt = parseInt(req.params.uuid, 10);
 
-  if (isNaN(uuidInt)) {
-    return res.status(400).json({ error: "El UUID debe ser un número entero" });
+    if (isNaN(uuidInt)) {
+      return res.status(400).json({ error: "El UUID debe ser un número entero" });
+    }
+
+    const user = await db.get(
+      "SELECT uuid, nickname, status FROM users WHERE uuid = ?",
+      [uuidInt]
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    if (user.status === "approved") {
+      await db.run(
+        "UPDATE users SET last_login = '29/08/2026' WHERE uuid = ?",
+        [uuidInt]
+      );
+    }
+
+    return res.json({
+      uuid: user.uuid,
+      nickname: user.nickname,
+      status: user.status,
+    });
+  } catch (error) {
+    console.error("Error en status:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
-
-  const user = db
-    .prepare("SELECT uuid, nickname, status, last_login FROM users WHERE uuid = ?")
-    .get(uuidInt);
-
-  if (!user) {
-    return res.status(404).json({ error: "Usuario no encontrado" });
-  }
-
-  // Si está aprobado, actualizar la última conexión
-  if (user.status === "approved") {
-    db.prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE uuid = ?").run(uuidInt);
-  }
-
-  return res.json({
-    uuid: user.uuid,
-    nickname: user.nickname,
-    status: user.status,
-    lastLogin: user.last_login
-  });
 });
-
 // ============================================================
 // ENDPOINTS PARA MINIJUEGOS
 // ============================================================
