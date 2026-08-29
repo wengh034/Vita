@@ -27,47 +27,7 @@ import "./App.css";
 import "./responsive.css";
 
 export default function App() {
-  const [connectionReady, setConnectionReady] =
-  useState(false);
 
-const [isOffline, setIsOffline] =
-  useState(false);
-useEffect(() => {
-
-  const checkConnection = async () => {
-
-    try {
-
-      const res = await apiFetch("/health");
-
-      if (!res.ok) {
-        throw new Error(
-          `Health check failed: ${res.status}`
-        );
-      }
-
-      console.log("🟢 Backend disponible");
-
-      setIsOffline(false);
-      setConnectionReady(true);
-
-    } catch (err) {
-
-      console.error(
-        "🔴 Backend no disponible:",
-        err
-      );
-
-      setIsOffline(true);
-      setConnectionReady(false);
-
-    }
-
-  };
-
-  checkConnection();
-
-}, []);
   // =========================================================
   // DATOS
   // =========================================================
@@ -121,13 +81,276 @@ useEffect(() => {
     useState(null);
 
   // =========================================================
-  // INICIALIZAR STATS
+  // COMPROBAR CONEXIÓN CON BACKEND
+  // =========================================================
+
+  const checkConnection = async () => {
+
+    try {
+
+      console.log(
+        "🌐 Comprobando conexión con backend..."
+      );
+
+      const res =
+        await apiFetch("/health");
+
+      if (!res.ok) {
+
+        throw new Error(
+          `HTTP ${res.status}`
+        );
+
+      }
+
+      console.log(
+        "✅ Conexión con backend confirmada"
+      );
+
+      setConnectionError(false);
+
+      return true;
+
+    } catch (err) {
+
+      console.error(
+        "❌ Backend todavía no disponible:",
+        err
+      );
+
+      return false;
+
+    }
+
+  };
+
+  // =========================================================
+  // ARRANQUE DE LA APLICACIÓN
   // =========================================================
 
   useEffect(() => {
 
-    initUserStats();
-    syncChaptersMeta();
+    let cancelled = false;
+
+    const waitForBackend = async () => {
+
+      // -------------------------------------------------------
+      // 1. ESPERAR AL BACKEND
+      // -------------------------------------------------------
+
+      while (!cancelled) {
+
+        const connected =
+          await checkConnection();
+
+        if (connected) {
+          break;
+        }
+
+        console.log(
+          "⏳ Backend no disponible."
+        );
+
+        console.log(
+          "🔄 Reintentando en 3 segundos..."
+        );
+
+        await new Promise(resolve =>
+          setTimeout(resolve, 3000)
+        );
+
+      }
+
+      if (cancelled) return;
+
+      // -------------------------------------------------------
+      // 2. CARGAR DATOS INICIALES
+      // -------------------------------------------------------
+
+      try {
+
+        console.log(
+          "📦 Cargando datos iniciales..."
+        );
+
+        const [
+          subjectsData,
+          booksData,
+        ] = await Promise.all([
+
+          apiFetch("/matters")
+            .then(res => {
+
+              if (!res.ok) {
+
+                throw new Error(
+                  `Error /matters: HTTP ${res.status}`
+                );
+
+              }
+
+              return res.json();
+
+            }),
+
+          apiFetch("/books")
+            .then(res => {
+
+              if (!res.ok) {
+
+                throw new Error(
+                  `Error /books: HTTP ${res.status}`
+                );
+
+              }
+
+              return res.json();
+
+            }),
+
+        ]);
+
+        if (cancelled) return;
+
+        setSubjects(subjectsData);
+        setBooks(booksData);
+
+        setDataLoaded(true);
+
+        console.log(
+          "📚 Datos iniciales cargados"
+        );
+
+        // -----------------------------------------------------
+        // 3. FECHA DEL SERVIDOR
+        // -----------------------------------------------------
+
+        const dateRes =
+          await apiFetch("/server-date");
+
+        if (!dateRes.ok) {
+
+          throw new Error(
+            `Error /server-date: HTTP ${dateRes.status}`
+          );
+
+        }
+
+        const dateData =
+          await dateRes.json();
+
+        if (cancelled) return;
+
+        setServerDate(dateData.date);
+
+        console.log(
+          "📅 Fecha del servidor obtenida:",
+          dateData.date
+        );
+
+        // -----------------------------------------------------
+        // 4. INICIALIZAR ESTADÍSTICAS LOCALES
+        // -----------------------------------------------------
+
+        await initUserStats();
+
+        if (cancelled) return;
+
+        console.log(
+          "💾 Estadísticas locales inicializadas"
+        );
+
+        // -----------------------------------------------------
+        // 5. SINCRONIZAR METADATA
+        // -----------------------------------------------------
+
+        await syncChaptersMeta();
+
+        if (cancelled) return;
+
+        console.log(
+          "🔄 Metadata de capítulos sincronizada"
+        );
+
+        // -----------------------------------------------------
+        // 6. APLICACIÓN LISTA
+        // -----------------------------------------------------
+
+        setContentReady(true);
+
+        console.log(
+          "🚀 Vita está lista"
+        );
+
+      } catch (err) {
+
+        console.error(
+          "❌ Error durante la inicialización:",
+          err
+        );
+
+        if (!cancelled) {
+
+          setConnectionError(true);
+
+        }
+
+      }
+
+    };
+
+    waitForBackend();
+
+    return () => {
+
+      cancelled = true;
+
+    };
+
+  }, []);
+
+  // =========================================================
+  // VALIDAR RACHA
+  // =========================================================
+
+  useEffect(() => {
+
+    if (!serverDate) return;
+
+    validateStreak(serverDate);
+
+  }, [serverDate]);
+
+  // =========================================================
+  // CONFIGURAR ALTURA DE LA APP
+  // =========================================================
+
+  useEffect(() => {
+
+    const setAppHeight = () => {
+
+      document.documentElement.style.setProperty(
+        "--app-height",
+        `${window.innerHeight}px`
+      );
+
+    };
+
+    setAppHeight();
+
+    window.addEventListener(
+      "resize",
+      setAppHeight
+    );
+
+    return () => {
+
+      window.removeEventListener(
+        "resize",
+        setAppHeight
+      );
+
+    };
 
   }, []);
 
@@ -189,70 +412,14 @@ useEffect(() => {
 
   }, []);
 
-// =========================================================
-// COMPROBAR CONEXIÓN CON BACKEND
-// =========================================================
-
-const checkConnection = async () => {
-
-  try {
-
-    console.log(
-      "🌐 Comprobando conexión con backend..."
-    );
-
-    const res =
-      await apiFetch("/health");
-
-    if (!res.ok) {
-
-      throw new Error(
-        `HTTP ${res.status}`
-      );
-
-    }
-
-    console.log(
-      "✅ Conexión con backend confirmada"
-    );
-
-    setConnectionError(false);
-
-    return true;
-
-  } catch (err) {
-
-    console.error(
-      "❌ No se pudo conectar con el backend:",
-      err
-    );
-
-    setConnectionError(true);
-
-    return false;
-
-  }
-
-};
-
   // =========================================================
-  // COMPROBAR CONEXIÓN AL INICIAR
-  // =========================================================
-
-  useEffect(() => {
-
-    checkConnection();
-
-  }, []);
-
-  // =========================================================
-  // REINTENTAR CONEXIÓN
+  // REINTENTAR MANUALMENTE
   // =========================================================
 
   const retryConnection = async () => {
 
     console.log(
-      "🔄 Reintentando conexión..."
+      "🔄 Reintentando conexión manualmente..."
     );
 
     setRetryingConnection(true);
@@ -269,146 +436,6 @@ const checkConnection = async () => {
     setRetryingConnection(false);
 
   };
-
-  // =========================================================
-  // FECHA DEL SERVIDOR
-  // =========================================================
-
-  useEffect(() => {
-
-    apiFetch("/server-date")
-      .then((res) => res.json())
-      .then((data) => {
-
-        setServerDate(data.date);
-
-      })
-      .catch((err) => {
-
-        console.error(
-          "Error obteniendo fecha del servidor",
-          err
-        );
-
-      });
-
-  }, []);
-
-  // =========================================================
-  // VALIDAR RACHA
-  // =========================================================
-
-  useEffect(() => {
-
-    if (!serverDate) return;
-
-    validateStreak(serverDate);
-
-  }, [serverDate]);
-
-  // =========================================================
-  // CONFIGURACIÓN INICIAL + DATOS
-  // =========================================================
-
-  useEffect(() => {
-
-    if (connectionError) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const setAppHeight = () => {
-
-      document.documentElement.style.setProperty(
-        "--app-height",
-        `${window.innerHeight}px`
-      );
-
-    };
-
-    setAppHeight();
-
-    window.addEventListener(
-      "resize",
-      setAppHeight
-    );
-
-    const loadData = async () => {
-
-      try {
-
-        const [
-          subjectsData,
-          booksData,
-        ] = await Promise.all([
-
-          apiFetch("/matters")
-            .then((res) => {
-
-              if (!res.ok) {
-                throw new Error(
-                  `Error /matters: HTTP ${res.status}`
-                );
-              }
-
-              return res.json();
-
-            }),
-
-          apiFetch("/books")
-            .then((res) => {
-
-              if (!res.ok) {
-                throw new Error(
-                  `Error /books: HTTP ${res.status}`
-                );
-              }
-
-              return res.json();
-
-            }),
-
-        ]);
-
-        if (cancelled) return;
-
-        setSubjects(subjectsData);
-        setBooks(booksData);
-
-        setDataLoaded(true);
-
-        setContentReady(true);
-
-      } catch (err) {
-
-        console.error(
-          "Error cargando datos iniciales",
-          err
-        );
-
-        if (cancelled) return;
-
-        setConnectionError(true);
-
-      }
-
-    };
-
-    loadData();
-
-    return () => {
-
-      cancelled = true;
-
-      window.removeEventListener(
-        "resize",
-        setAppHeight
-      );
-
-    };
-
-  }, [connectionError]);
 
   // =========================================================
   // CONTROL DEL LOADER
