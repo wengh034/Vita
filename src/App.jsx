@@ -83,231 +83,191 @@ export default function App() {
   // =========================================================
   // COMPROBAR CONEXIÓN CON BACKEND
   // =========================================================
+const checkConnection = async () => {
 
-  const checkConnection = async () => {
+  try {
+
+    console.log(
+      "🌐 Comprobando conexión con backend..."
+    );
+
+    const res =
+      await apiFetch("/health");
+
+    if (!res.ok) {
+
+      throw new Error(
+        `HTTP ${res.status}`
+      );
+
+    }
+
+    console.log(
+      "✅ Conexión con backend confirmada"
+    );
+
+    return true;
+
+  } catch (err) {
+
+    console.error(
+      "❌ Backend no disponible:",
+      err
+    );
+
+    return false;
+
+  }
+
+};
+  // =========================================================
+  // ARRANQUE DE LA APLICACIÓN
+  // =========================================================
+
+useEffect(() => {
+
+  let cancelled = false;
+
+  const startApp = async () => {
+
+    console.log("🚀 Iniciando Vita...");
+
+    // -------------------------------------------------------
+    // 1. COMPROBAR BACKEND
+    // -------------------------------------------------------
+
+    const connected = await checkConnection();
+
+    if (cancelled) return;
+
+    if (!connected) {
+
+      console.log(
+        "🔴 Vita iniciada sin conexión con el backend"
+      );
+
+      setConnectionError(true);
+
+      return;
+    }
+
+    // -------------------------------------------------------
+    // 2. CARGAR DATOS
+    // -------------------------------------------------------
 
     try {
 
-      console.log(
-        "🌐 Comprobando conexión con backend..."
-      );
+      console.log("📦 Cargando datos iniciales...");
 
-      const res =
-        await apiFetch("/health");
+      const [
+        subjectsData,
+        booksData,
+      ] = await Promise.all([
 
-      if (!res.ok) {
+        apiFetch("/matters")
+          .then(res => {
+
+            if (!res.ok) {
+              throw new Error(
+                `Error /matters: HTTP ${res.status}`
+              );
+            }
+
+            return res.json();
+
+          }),
+
+        apiFetch("/books")
+          .then(res => {
+
+            if (!res.ok) {
+              throw new Error(
+                `Error /books: HTTP ${res.status}`
+              );
+            }
+
+            return res.json();
+
+          }),
+
+      ]);
+
+      if (cancelled) return;
+
+      setSubjects(subjectsData);
+      setBooks(booksData);
+      setDataLoaded(true);
+
+      console.log("📚 Datos iniciales cargados");
+
+      // -----------------------------------------------------
+      // 3. FECHA DEL SERVIDOR
+      // -----------------------------------------------------
+
+      const dateRes =
+        await apiFetch("/server-date");
+
+      if (!dateRes.ok) {
 
         throw new Error(
-          `HTTP ${res.status}`
+          `Error /server-date: HTTP ${dateRes.status}`
         );
 
       }
 
-      console.log(
-        "✅ Conexión con backend confirmada"
-      );
+      const dateData =
+        await dateRes.json();
 
-      setConnectionError(false);
+      if (cancelled) return;
 
-      return true;
+      setServerDate(dateData.date);
+
+      // -----------------------------------------------------
+      // 4. STATS LOCALES
+      // -----------------------------------------------------
+
+      await initUserStats();
+
+      if (cancelled) return;
+
+      // -----------------------------------------------------
+      // 5. SINCRONIZAR METADATA
+      // -----------------------------------------------------
+
+      await syncChaptersMeta();
+
+      if (cancelled) return;
+
+      // -----------------------------------------------------
+      // 6. LISTO
+      // -----------------------------------------------------
+
+      setContentReady(true);
+
+      console.log("🚀 Vita lista");
 
     } catch (err) {
 
       console.error(
-        "❌ Backend todavía no disponible:",
+        "❌ Error durante la inicialización:",
         err
       );
 
-      return false;
+      if (!cancelled) {
+        setConnectionError(true);
+      }
 
     }
 
   };
 
-  // =========================================================
-  // ARRANQUE DE LA APLICACIÓN
-  // =========================================================
+  startApp();
 
-  useEffect(() => {
+  return () => {
+    cancelled = true;
+  };
 
-    let cancelled = false;
-
-    const waitForBackend = async () => {
-
-      // -------------------------------------------------------
-      // 1. ESPERAR AL BACKEND
-      // -------------------------------------------------------
-
-      while (!cancelled) {
-
-        const connected =
-          await checkConnection();
-
-        if (connected) {
-          break;
-        }
-
-        console.log(
-          "⏳ Backend no disponible."
-        );
-
-        console.log(
-          "🔄 Reintentando en 3 segundos..."
-        );
-
-        await new Promise(resolve =>
-          setTimeout(resolve, 3000)
-        );
-
-      }
-
-      if (cancelled) return;
-
-      // -------------------------------------------------------
-      // 2. CARGAR DATOS INICIALES
-      // -------------------------------------------------------
-
-      try {
-
-        console.log(
-          "📦 Cargando datos iniciales..."
-        );
-
-        const [
-          subjectsData,
-          booksData,
-        ] = await Promise.all([
-
-          apiFetch("/matters")
-            .then(res => {
-
-              if (!res.ok) {
-
-                throw new Error(
-                  `Error /matters: HTTP ${res.status}`
-                );
-
-              }
-
-              return res.json();
-
-            }),
-
-          apiFetch("/books")
-            .then(res => {
-
-              if (!res.ok) {
-
-                throw new Error(
-                  `Error /books: HTTP ${res.status}`
-                );
-
-              }
-
-              return res.json();
-
-            }),
-
-        ]);
-
-        if (cancelled) return;
-
-        setSubjects(subjectsData);
-        setBooks(booksData);
-
-        setDataLoaded(true);
-
-        console.log(
-          "📚 Datos iniciales cargados"
-        );
-
-        // -----------------------------------------------------
-        // 3. FECHA DEL SERVIDOR
-        // -----------------------------------------------------
-
-        const dateRes =
-          await apiFetch("/server-date");
-
-        if (!dateRes.ok) {
-
-          throw new Error(
-            `Error /server-date: HTTP ${dateRes.status}`
-          );
-
-        }
-
-        const dateData =
-          await dateRes.json();
-
-        if (cancelled) return;
-
-        setServerDate(dateData.date);
-
-        console.log(
-          "📅 Fecha del servidor obtenida:",
-          dateData.date
-        );
-
-        // -----------------------------------------------------
-        // 4. INICIALIZAR ESTADÍSTICAS LOCALES
-        // -----------------------------------------------------
-
-        await initUserStats();
-
-        if (cancelled) return;
-
-        console.log(
-          "💾 Estadísticas locales inicializadas"
-        );
-
-        // -----------------------------------------------------
-        // 5. SINCRONIZAR METADATA
-        // -----------------------------------------------------
-
-        await syncChaptersMeta();
-
-        if (cancelled) return;
-
-        console.log(
-          "🔄 Metadata de capítulos sincronizada"
-        );
-
-        // -----------------------------------------------------
-        // 6. APLICACIÓN LISTA
-        // -----------------------------------------------------
-
-        setContentReady(true);
-
-        console.log(
-          "🚀 Vita está lista"
-        );
-
-      } catch (err) {
-
-        console.error(
-          "❌ Error durante la inicialización:",
-          err
-        );
-
-        if (!cancelled) {
-
-          setConnectionError(true);
-
-        }
-
-      }
-
-    };
-
-    waitForBackend();
-
-    return () => {
-
-      cancelled = true;
-
-    };
-
-  }, []);
+}, []);
 
   // =========================================================
   // VALIDAR RACHA
