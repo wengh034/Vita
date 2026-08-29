@@ -366,13 +366,19 @@ export default function InstallPage({
         <h1 className="Bobbleboddy-font">
           Vita
         </h1>
-
-
         <h2>
           Navegador no compatible
         </h2>
 
+      <div 
+      style={{
+        justifyContent: "center",
+        display: "flex",
+        flexDirection: "column",
 
+        textAlign: "center",
+      }}
+      >
         <p>
           Vita necesita{" "}
           <strong>
@@ -386,14 +392,11 @@ export default function InstallPage({
           Actualmente estás usando{" "}
           <strong>
             {browserName}
-          </strong>.
-        </p>
-
-
-        <p>
-          Abre Vita desde Google Chrome
+          </strong>. Abre Vita desde Google Chrome
           para instalarla como aplicación.
         </p>
+      </div>
+        
 
       </div>
 

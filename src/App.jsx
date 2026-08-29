@@ -25,6 +25,7 @@ import InstallPage from "./components/installPage.jsx";
 
 import "./App.css";
 import "./responsive.css";
+import OfflinePage from "./components/offlinePage.jsx";
 
 export default function App() {
 
@@ -463,61 +464,8 @@ useEffect(() => {
 
       {connectionError && !showLoading && (
 
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 10000,
-
-            display: "flex",
-            flexDirection: "column",
-
-            justifyContent: "center",
-            alignItems: "center",
-
-            width: "100vw",
-            height: "100vh",
-
-            padding: "2rem",
-            boxSizing: "border-box",
-
-            textAlign: "center",
-
-            backgroundColor: "#7f5af0",
-          }}
-        >
-
-          <div
-            className="Bobbleboddy-font"
-            style={{
-              fontSize: "2.5em",
-              marginBottom: "1rem",
-            }}
-          >
-            Sin conexión
-          </div>
-
-          <p
-            style={{
-              maxWidth: "400px",
-              marginBottom: "1.5rem",
-            }}
-          >
-            Vita necesita conexión con el servidor
-            para funcionar.
-          </p>
-
-          <button
-            onClick={retryConnection}
-            style={{
-              cursor: "pointer",
-            }}
-          >
-            {retryingConnection
-              ? "Comprobando..."
-              : "Reintentar conexión"}
-          </button>
-
+        <div>
+          <OfflinePage/>
         </div>
 
       )}

@@ -34,6 +34,70 @@ button {
   justify-content: center;
   align-items: center;
 }
+/*//////////////////////////////////////*/
+/* =========================================================
+   PANTALLA SIN CONEXIÓN
+   ========================================================= */
+
+.offline-page {
+  position: fixed;
+  inset: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: #7f5af0;
+
+  padding: 2rem;
+  box-sizing: border-box;
+
+  text-align: center;
+}
+
+.offline-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  max-width: 400px;
+}
+
+.offline-content h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.5rem;
+  /* font-family: "Bobbleboddy", sans-serif; */
+}
+
+.offline-content p {
+  margin: 0 0 1.5rem;
+
+  font-size: 1rem;
+}
+
+.offline-content button {
+  padding: 0.7rem 1.4rem;
+
+  border: none;
+  border-radius: 6px;
+
+  background-color: #ffffff;
+  color: #7f5af0;
+
+  font-size: 1rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.offline-content button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+/*/////////////////////////////////////*/
 .material-symbols-outlined {
   font-variation-settings:
   'FILL' 0,
