@@ -1,13 +1,19 @@
 import React, { useState } from "react";
 
-export default function UserAuthModal({ userStatus, onRegister }) {
+export default function UserAuthModal({ userStatus, userData, onRegister }) {
   const [nickname, setNickname] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Reemplaza con tu número de WhatsApp en formato internacional (sin el signo +)
   const ADMIN_WHATSAPP = "595991982552"; 
-  const waMessage = encodeURIComponent("Hola, me registré en Vita y quisiera solicitar acceso a mi cuenta.");
+
+  // Toma el nick que viene guardado tras registrarse o el del input local
+  const activeNick = userData?.nickname || nickname;
+
+  // Enlace dinámico con el nick capturado
+  const waMessage = encodeURIComponent(
+    `Hola, me registré en Vita con el usuario "*${activeNick}*" y quisiera solicitar la aprobación de mi cuenta.`
+  );
   const waLink = `https://wa.me/${ADMIN_WHATSAPP}?text=${waMessage}`;
 
   const handleSubmit = async (e) => {
@@ -55,7 +61,7 @@ export default function UserAuthModal({ userStatus, onRegister }) {
         {/* 2. VISTA DE PENDIENTE DE APROBACIÓN */}
         {userStatus === "pending" && (
           <div>
-            <h2 style={{ color: "#f7c948", margin: "0 0 1rem 0" }}> Registro pendiente</h2>
+            <h2 style={{ color: "#f7c948", margin: "0 0 1rem 0" }}>Registro pendiente</h2>
             <p style={styles.text}>
               Tu solicitud fue enviada correctamente. El administrador aún no ha revisado tu acceso.
             </p>

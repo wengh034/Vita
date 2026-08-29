@@ -118,21 +118,23 @@ api.get("/users", async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
-function generateUniqueIntUuid() {
+// Generar UUID único usando la tabla 'Users' y la columna 'uuid'
+async function generateUniqueIntUuid() {
   let isUnique = false;
   let candidateUuid;
 
   while (!isUnique) {
     candidateUuid = Math.floor(10000000 + Math.random() * 90000000);
-    const row = db.prepare("SELECT id FROM users WHERE uuid = ?").get(candidateUuid);
+    const row = await db.get("SELECT uuid FROM Users WHERE uuid = ?", [candidateUuid]);
     if (!row) isUnique = true;
   }
 
   return candidateUuid;
 }
 
+// Endpoint de registro
 api.post("/users/register", async (req, res) => {
-  const { nickname } = req.body;
+  const { nickname } = req.body || {};
 
   if (!nickname || nickname.trim() === "") {
     return res.status(400).json({ error: "El nombre de usuario es obligatorio" });
@@ -141,9 +143,9 @@ api.post("/users/register", async (req, res) => {
   const cleanNickname = nickname.trim();
 
   try {
-    // 1. Verificar si el nombre de usuario ya existe (usando db.get directamente)
+    // 1. Verificar si el usuario ya existe
     const existingUser = await db.get(
-      "SELECT uuid, nickname, status FROM users WHERE nickname = ?",
+      "SELECT uuid, nickname, status FROM Users WHERE nickname = ?",
       [cleanNickname]
     );
 
@@ -156,13 +158,14 @@ api.post("/users/register", async (req, res) => {
       });
     }
 
-    // 2. Generar el UUID entero (esperando la promesa)
+    // 2. Generar UUID único
     const newUuid = await generateUniqueIntUuid();
+    const fechaActual = "29/08/2026";
 
-    // 3. Insertar el nuevo usuario (usando db.run directamente)
+    // 3. Insertar usuario con la estructura correcta de la tabla Users
     await db.run(
-      "INSERT INTO users (uuid, nickname, status) VALUES (?, ?, 'pending')",
-      [newUuid, cleanNickname]
+      "INSERT INTO Users (uuid, nickname, status, created_at) VALUES (?, ?, 'pending', ?)",
+      [newUuid, cleanNickname, fechaActual]
     );
 
     return res.status(201).json({
