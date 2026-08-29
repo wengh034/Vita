@@ -2,29 +2,33 @@ import React, { useState } from "react";
 
 export default function UserAuthModal({ userStatus, userData, onRegister }) {
   const [nickname, setNickname] = useState("");
+  // Guardamos el nick enviado para que no se pierda al cambiar de vista
+  const [submittedNick, setSubmittedNick] = useState(""); 
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   const ADMIN_WHATSAPP = "595991982552"; 
 
-  // Toma el nick que viene guardado tras registrarse o el del input local
-  const activeNick = userData?.nickname || nickname;
+  // Prioridad: 1. userData del backend -> 2. Nick enviado localmente -> 3. Input actual
+  const activeNick = userData?.nickname || submittedNick || nickname;
 
   // Enlace dinámico con el nick capturado
   const waMessage = encodeURIComponent(
-    `Hola, me registré en Vita con el usuario "*${activeNick}*" y quisiera solicitar la aprobación de mi cuenta.`
+    `Hola, me registré en Vita con el usuario "*${activeNick}*" y quisiera solicitar acceso a mi cuenta.`
   );
   const waLink = `https://wa.me/${ADMIN_WHATSAPP}?text=${waMessage}`;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!nickname.trim()) return;
+    const cleanNick = nickname.trim();
+    if (!cleanNick) return;
 
     setSubmitting(true);
     setErrorMsg("");
+    setSubmittedNick(cleanNick); // Guardamos el nick inmediatamente antes de enviar
 
     try {
-      await onRegister(nickname.trim());
+      await onRegister(cleanNick);
     } catch (err) {
       setErrorMsg("Error al registrar el usuario. Inténtalo de nuevo.");
     } finally {
