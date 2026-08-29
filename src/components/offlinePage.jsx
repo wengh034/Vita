@@ -1,7 +1,7 @@
 import React from "react";
 import SVGComponent from "./SvgComponent";
 import vitaLogo from "../assets/icons/vita-logo.svg";
-export default function OfflinePage({ onRetry, retrying }) {
+export default function OfflinePage({ onRetry, isRetrying }) {
   return (
     <div className="offline-page">
 
@@ -17,14 +17,14 @@ export default function OfflinePage({ onRetry, retrying }) {
             </div> 
 
         <p>
-          Vita no puede conectarse con el servidor.
+          No se pudo conectar con el servidor de Vita. Comprueba tu conexión a internet o intenta de nuevo más tarde.
         </p>
 
         <button
           onClick={onRetry}
-          disabled={retrying}
+          disabled={isRetrying}
         >
-          {retrying
+          {isRetrying
             ? "Comprobando..."
             : "Reintentar conexión"}
         </button>
