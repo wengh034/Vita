@@ -101,9 +101,98 @@ api.get("/health", (req, res) => {
   });
 });
 
+// ============================================================
+// registro y consulta de users
+// ============================================================
+// Servidor (Node.js + Express)
+
+function generateUniqueIntUuid() {
+  let isUnique = false;
+  let candidateUuid;
+
+  while (!isUnique) {
+    candidateUuid = Math.floor(10000000 + Math.random() * 90000000);
+    const row = db.prepare("SELECT id FROM users WHERE uuid = ?").get(candidateUuid);
+    if (!row) isUnique = true;
+  }
+
+  return candidateUuid;
+}
+
+app.post("/users/register", (req, res) => {
+  const { nickname } = req.body;
+
+  if (!nickname || nickname.trim() === "") {
+    return res.status(400).json({ error: "El nombre de usuario es obligatorio" });
+  }
+
+  const cleanNickname = nickname.trim();
+
+  try {
+    // 1. Verificar si el nombre de usuario ya existe
+    const existingUser = db
+      .prepare("SELECT uuid, nickname, status FROM users WHERE nickname = ?")
+      .get(cleanNickname);
+
+    if (existingUser) {
+      return res.json({
+        uuid: existingUser.uuid,
+        nickname: existingUser.nickname,
+        status: existingUser.status,
+        message: "El usuario ya existe"
+      });
+    }
+
+    // 2. Generar el UUID entero en el momento
+    const newUuid = generateUniqueIntUuid();
+
+    // 3. Insertar el nuevo usuario
+    db.prepare(`
+      INSERT INTO users (uuid, nickname, status)
+      VALUES (?, ?, 'pending')
+    `).run(newUuid, cleanNickname);
+
+    return res.status(201).json({
+      uuid: newUuid,
+      nickname: cleanNickname,
+      status: "pending",
+      message: "Solicitud enviada correctamente"
+    });
+  } catch (err) {
+    console.error("Error al registrar usuario:", err);
+    return res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+app.get("/users/status/:uuid", (req, res) => {
+  const uuidInt = parseInt(req.params.uuid, 10);
+
+  if (isNaN(uuidInt)) {
+    return res.status(400).json({ error: "El UUID debe ser un número entero" });
+  }
+
+  const user = db
+    .prepare("SELECT uuid, nickname, status, last_login FROM users WHERE uuid = ?")
+    .get(uuidInt);
+
+  if (!user) {
+    return res.status(404).json({ error: "Usuario no encontrado" });
+  }
+
+  // Si está aprobado, actualizar la última conexión
+  if (user.status === "approved") {
+    db.prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE uuid = ?").run(uuidInt);
+  }
+
+  return res.json({
+    uuid: user.uuid,
+    nickname: user.nickname,
+    status: user.status,
+    lastLogin: user.last_login
+  });
+});
 
 // ============================================================
-// PRUEBA DE ENDPOINTS PARA MINIJUEGOS
+// ENDPOINTS PARA MINIJUEGOS
 // ============================================================
 
 api.get("/modules/:subjectId", async (req, res) => {
@@ -240,7 +329,7 @@ api.post("/ai/explain-answer", async (req, res) => {
 
   } catch (error) {
     log.error(
-      "Error en /api/ai/explain-answer:",
+      "Error en /ai/explain-answer:",
       error
     );
 
@@ -468,7 +557,7 @@ api.post("/admin/questions/batch", async (req, res) => {
     await db.run("ROLLBACK");
 
     log.error(
-      "Error en /api/admin/questions/batch:",
+      "Error en /admin/questions/batch:",
       err
     );
 

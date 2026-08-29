@@ -23,6 +23,7 @@ import ChapterPage from "./components/ChapterPage.jsx";
 import GamePage from "./components/GamePage.jsx";
 import InstallPage from "./components/installPage.jsx";
 import OfflinePage from "./components/offlinePage.jsx";
+import UserAuthModal from "./components/UserAuthModal.jsx";
 
 import "./App.css";
 import "./responsive.css";
@@ -40,6 +41,12 @@ export default function App() {
   const [subjects, setSubjects] = useState([]);
   const [books, setBooks] = useState([]);
   const [serverDate, setServerDate] = useState(null);
+
+  // =========================================================
+  // USUARIO / AUTENTICACIÓN
+  // =========================================================
+
+  const [userStatus, setUserStatus] = useState(null); // null, 'pending', 'approved', 'rejected'
 
   // =========================================================
   // CONEXIÓN
@@ -109,7 +116,52 @@ export default function App() {
       }
 
       // -------------------------------------------------------
-      // 2. CARGAR DATOS
+      // 2. VERIFICAR ESTADO DEL USUARIO
+      // -------------------------------------------------------
+
+      const storedUuid = localStorage.getItem("vita_user_uuid");
+
+      if (storedUuid) {
+        try {
+          const statusRes = await apiFetch(`/users/status/${storedUuid}`);
+
+          if (statusRes.ok) {
+            const userData = await statusRes.json();
+            if (cancelled) return;
+
+            setUserStatus(userData.status);
+
+            // Si el usuario NO está aprobado ('pending' o 'rejected'), no cargamos datos
+            if (userData.status !== "approved") {
+              console.log(`⚠️ Usuario en estado '${userData.status}'. Acceso restringido.`);
+              setShowLoading(false);
+              return;
+            }
+          } else {
+            // El UUID ya no existe en el backend
+            console.warn("⚠️ UUID no válido o eliminado en backend. Limpiando localStorage...");
+            localStorage.removeItem("vita_user_uuid");
+            setUserStatus(null);
+            setShowLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.error("❌ Error al verificar estado de usuario:", err);
+          if (!cancelled) {
+            setConnectionError(true);
+            setShowLoading(false);
+          }
+          return;
+        }
+      } else {
+        // No hay UUID guardado -> Requiere registro
+        console.log("👤 No hay usuario registrado localmente.");
+        setShowLoading(false);
+        return;
+      }
+
+      // -------------------------------------------------------
+      // 3. CARGAR DATOS (Solo para usuarios APROBADOS)
       // -------------------------------------------------------
 
       try {
@@ -140,7 +192,7 @@ export default function App() {
         console.log("📚 Datos iniciales cargados");
 
         // -----------------------------------------------------
-        // 3. FECHA DEL SERVIDOR
+        // 4. FECHA DEL SERVIDOR
         // -----------------------------------------------------
 
         const dateRes = await apiFetch("/server-date");
@@ -156,7 +208,7 @@ export default function App() {
         setServerDate(dateData.date);
 
         // -----------------------------------------------------
-        // 4. STATS LOCALES
+        // 5. STATS LOCALES
         // -----------------------------------------------------
 
         await initUserStats();
@@ -164,7 +216,7 @@ export default function App() {
         if (cancelled) return;
 
         // -----------------------------------------------------
-        // 5. SINCRONIZAR METADATA
+        // 6. SINCRONIZAR METADATA
         // -----------------------------------------------------
 
         await syncChaptersMeta();
@@ -172,7 +224,7 @@ export default function App() {
         if (cancelled) return;
 
         // -----------------------------------------------------
-        // 6. LISTO
+        // 7. LISTO
         // -----------------------------------------------------
 
         setContentReady(true);
@@ -194,6 +246,26 @@ export default function App() {
       cancelled = true;
     };
   }, []);
+
+  // =========================================================
+  // HANDLER REGISTRO DE USUARIO
+  // =========================================================
+
+  const handleRegisterUser = async (nickname) => {
+    const res = await apiFetch("/users/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nickname }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    localStorage.setItem("vita_user_uuid", data.uuid);
+    setUserStatus(data.status); // Pasará a 'pending'
+  };
 
   // =========================================================
   // VALIDAR RACHA
@@ -349,8 +421,14 @@ export default function App() {
             Vita
           </div>
         </div>
+      ) : userStatus !== "approved" ? (
+        /* 3. Si el usuario no está registrado o su estado no es 'approved' */
+        <UserAuthModal
+          userStatus={userStatus}
+          onRegister={handleRegisterUser}
+        />
       ) : isInstalled && dataLoaded ? (
-        /* 3. Si la PWA está instalada y con datos, carga la App */
+        /* 4. Si está aprobado, la PWA está instalada y con datos, carga la App */
         <Router basename="/Vita">
           <Routes>
             <Route
@@ -373,7 +451,7 @@ export default function App() {
           </Routes>
         </Router>
       ) : (
-        /* 4. Pantalla de instalación */
+        /* 5. Pantalla de instalación */
         <InstallPage deferredPrompt={deferredPrompt} />
       )}
     </>
