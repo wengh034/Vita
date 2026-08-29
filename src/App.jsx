@@ -27,7 +27,47 @@ import "./App.css";
 import "./responsive.css";
 
 export default function App() {
+  const [connectionReady, setConnectionReady] =
+  useState(false);
 
+const [isOffline, setIsOffline] =
+  useState(false);
+useEffect(() => {
+
+  const checkConnection = async () => {
+
+    try {
+
+      const res = await apiFetch("/health");
+
+      if (!res.ok) {
+        throw new Error(
+          `Health check failed: ${res.status}`
+        );
+      }
+
+      console.log("🟢 Backend disponible");
+
+      setIsOffline(false);
+      setConnectionReady(true);
+
+    } catch (err) {
+
+      console.error(
+        "🔴 Backend no disponible:",
+        err
+      );
+
+      setIsOffline(true);
+      setConnectionReady(false);
+
+    }
+
+  };
+
+  checkConnection();
+
+}, []);
   // =========================================================
   // DATOS
   // =========================================================
@@ -49,6 +89,16 @@ export default function App() {
 
   const [serverDate, setServerDate] =
     useState(null);
+
+  // =========================================================
+  // CONEXIÓN
+  // =========================================================
+
+  const [connectionError, setConnectionError] =
+    useState(false);
+
+  const [retryingConnection, setRetryingConnection] =
+    useState(false);
 
   // =========================================================
   // LOADING
@@ -75,8 +125,10 @@ export default function App() {
   // =========================================================
 
   useEffect(() => {
+
     initUserStats();
     syncChaptersMeta();
+
   }, []);
 
   // =========================================================
@@ -84,10 +136,6 @@ export default function App() {
   // =========================================================
 
   useEffect(() => {
-
-    // -------------------------------------------------------
-    // Detectar si Vita YA está ejecutándose como PWA
-    // -------------------------------------------------------
 
     const standalone =
       window.matchMedia(
@@ -111,10 +159,6 @@ export default function App() {
 
     }
 
-    // -------------------------------------------------------
-    // beforeinstallprompt
-    // -------------------------------------------------------
-
     const handleBeforeInstallPrompt = (
       event
     ) => {
@@ -123,15 +167,10 @@ export default function App() {
         "🔥 beforeinstallprompt DISPARADO"
       );
 
-      // Evita que el navegador muestre
-      // automáticamente su propio aviso.
-
       event.preventDefault();
 
-      // Guardamos el evento para que
-      // InstallPage pueda utilizarlo.
-
       setDeferredPrompt(event);
+
     };
 
     window.addEventListener(
@@ -149,6 +188,87 @@ export default function App() {
     };
 
   }, []);
+
+// =========================================================
+// COMPROBAR CONEXIÓN CON BACKEND
+// =========================================================
+
+const checkConnection = async () => {
+
+  try {
+
+    console.log(
+      "🌐 Comprobando conexión con backend..."
+    );
+
+    const res =
+      await apiFetch("/health");
+
+    if (!res.ok) {
+
+      throw new Error(
+        `HTTP ${res.status}`
+      );
+
+    }
+
+    console.log(
+      "✅ Conexión con backend confirmada"
+    );
+
+    setConnectionError(false);
+
+    return true;
+
+  } catch (err) {
+
+    console.error(
+      "❌ No se pudo conectar con el backend:",
+      err
+    );
+
+    setConnectionError(true);
+
+    return false;
+
+  }
+
+};
+
+  // =========================================================
+  // COMPROBAR CONEXIÓN AL INICIAR
+  // =========================================================
+
+  useEffect(() => {
+
+    checkConnection();
+
+  }, []);
+
+  // =========================================================
+  // REINTENTAR CONEXIÓN
+  // =========================================================
+
+  const retryConnection = async () => {
+
+    console.log(
+      "🔄 Reintentando conexión..."
+    );
+
+    setRetryingConnection(true);
+
+    const connected =
+      await checkConnection();
+
+    if (connected) {
+
+      window.location.reload();
+
+    }
+
+    setRetryingConnection(false);
+
+  };
 
   // =========================================================
   // FECHA DEL SERVIDOR
@@ -192,6 +312,10 @@ export default function App() {
 
   useEffect(() => {
 
+    if (connectionError) {
+      return;
+    }
+
     let cancelled = false;
 
     const setAppHeight = () => {
@@ -220,10 +344,30 @@ export default function App() {
         ] = await Promise.all([
 
           apiFetch("/matters")
-            .then((res) => res.json()),
+            .then((res) => {
+
+              if (!res.ok) {
+                throw new Error(
+                  `Error /matters: HTTP ${res.status}`
+                );
+              }
+
+              return res.json();
+
+            }),
 
           apiFetch("/books")
-            .then((res) => res.json()),
+            .then((res) => {
+
+              if (!res.ok) {
+                throw new Error(
+                  `Error /books: HTTP ${res.status}`
+                );
+              }
+
+              return res.json();
+
+            }),
 
         ]);
 
@@ -233,8 +377,6 @@ export default function App() {
         setBooks(booksData);
 
         setDataLoaded(true);
-
-        // El loading ya no depende de BooksList.
 
         setContentReady(true);
 
@@ -247,8 +389,7 @@ export default function App() {
 
         if (cancelled) return;
 
-        setDataLoaded(true);
-        setContentReady(true);
+        setConnectionError(true);
 
       }
 
@@ -267,7 +408,7 @@ export default function App() {
 
     };
 
-  }, []);
+  }, [connectionError]);
 
   // =========================================================
   // CONTROL DEL LOADER
@@ -330,64 +471,16 @@ export default function App() {
     <>
 
       {/* =====================================================
-          APLICACIÓN
+          SIN CONEXIÓN
           ===================================================== */}
 
-      {isInstalled && dataLoaded && (
-
-        <Router basename="/Vita">
-
-          <Routes>
-
-            <Route
-              path="/"
-              element={
-                <BooksList
-                  subjects={subjects}
-                  books={books}
-                />
-              }
-            />
-
-            <Route
-              path="/book/:bookId/chapter/:chapterId"
-              element={<ChapterPage />}
-            />
-
-            <Route
-              path="/game/:subjectId/:moduleSlug"
-              element={<GamePage />}
-            />
-
-          </Routes>
-
-        </Router>
-
-      )}
-
-      {/* =====================================================
-          INSTALACIÓN
-          ===================================================== */}
-
-      {!isInstalled && !showLoading && (
-
-        <InstallPage
-          deferredPrompt={deferredPrompt}
-        />
-
-      )}
-
-      {/* =====================================================
-          LOADING
-          ===================================================== */}
-
-      {showLoading && (
+      {connectionError && !showLoading && (
 
         <div
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 9999,
+            zIndex: 10000,
 
             display: "flex",
             flexDirection: "column",
@@ -398,6 +491,11 @@ export default function App() {
             width: "100vw",
             height: "100vh",
 
+            padding: "2rem",
+            boxSizing: "border-box",
+
+            textAlign: "center",
+
             backgroundColor: "#7f5af0",
           }}
         >
@@ -405,17 +503,130 @@ export default function App() {
           <div
             className="Bobbleboddy-font"
             style={{
-              margin: "0",
-              maxWidth: "3.5em",
               fontSize: "2.5em",
+              marginBottom: "1rem",
             }}
           >
-            Vita
+            Sin conexión
           </div>
+
+          <p
+            style={{
+              maxWidth: "400px",
+              marginBottom: "1.5rem",
+            }}
+          >
+            Vita necesita conexión con el servidor
+            para funcionar.
+          </p>
+
+          <button
+            onClick={retryConnection}
+            style={{
+              cursor: "pointer",
+            }}
+          >
+            {retryingConnection
+              ? "Comprobando..."
+              : "Reintentar conexión"}
+          </button>
 
         </div>
 
       )}
+
+      {/* =====================================================
+          APLICACIÓN
+          ===================================================== */}
+
+      {!connectionError &&
+        isInstalled &&
+        dataLoaded && (
+
+          <Router basename="/Vita">
+
+            <Routes>
+
+              <Route
+                path="/"
+                element={
+                  <BooksList
+                    subjects={subjects}
+                    books={books}
+                  />
+                }
+              />
+
+              <Route
+                path="/book/:bookId/chapter/:chapterId"
+                element={<ChapterPage />}
+              />
+
+              <Route
+                path="/game/:subjectId/:moduleSlug"
+                element={<GamePage />}
+              />
+
+            </Routes>
+
+          </Router>
+
+        )}
+
+      {/* =====================================================
+          INSTALACIÓN
+          ===================================================== */}
+
+      {!connectionError &&
+        !isInstalled &&
+        !showLoading && (
+
+          <InstallPage
+            deferredPrompt={deferredPrompt}
+          />
+
+        )}
+
+      {/* =====================================================
+          LOADING
+          ===================================================== */}
+
+      {showLoading &&
+        !connectionError && (
+
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
+
+              display: "flex",
+              flexDirection: "column",
+
+              justifyContent: "center",
+              alignItems: "center",
+
+              width: "100vw",
+              height: "100vh",
+
+              backgroundColor: "#7f5af0",
+            }}
+          >
+
+            <div
+              className="Bobbleboddy-font"
+              style={{
+                margin: "0",
+                maxWidth: "3.5em",
+                fontSize: "2.5em",
+              }}
+            >
+              Vita
+            </div>
+
+          </div>
+
+        )}
 
     </>
   );
