@@ -1,43 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { apiFetch } from "../config/api.js";
 
-export default async function UserAuthModal({ userStatus, userData, onRegister }) {
+export default function UserAuthModal({ userStatus, userData, onRegister }) {
   const [nickname, setNickname] = useState("");
-  // Guardamos el nick enviado para que no se pierda al cambiar de vista
   const [submittedNick, setSubmittedNick] = useState(""); 
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [supportPhone, setSupportPhone] = useState("");
 
-  // const ADMIN_WHATSAPP = "595991982552"; 
-  const res = await apiFetch("/config/support-phone");
-const data = await res.json();
-  // Prioridad: 1. userData del backend -> 2. Nick enviado localmente -> 3. Input actual
+  // Cargar el teléfono de soporte una sola vez al montar el componente
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSupportPhone = async () => {
+      try {
+        const res = await apiFetch("/config/support-phone");
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setSupportPhone(data.phone);
+        }
+      } catch (err) {
+        console.error("Error al obtener número de soporte:", err);
+      }
+    };
+
+    fetchSupportPhone();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const activeNick = userData?.nickname || submittedNick || nickname;
 
-  // Enlace dinámico con el nick capturado
   const waMessage = encodeURIComponent(
     `Hola, me registré en Vita con el usuario "*${activeNick}*" y quisiera solicitar acceso a mi cuenta.`
   );
-  const waLink = `https://wa.me/${data.phone}?text=${waMessage}`;
+  const waLink = `https://wa.me/${supportPhone}?text=${waMessage}`;
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const cleanNick = nickname.trim();
-  if (!cleanNick) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const cleanNick = nickname.trim();
+    if (!cleanNick) return;
 
-  setSubmitting(true);
-  setErrorMsg("");
-  setSubmittedNick(cleanNick);
+    setSubmitting(true);
+    setErrorMsg("");
+    setSubmittedNick(cleanNick);
 
-  try {
-    await onRegister(cleanNick);
-  } catch (err) {
-    // Muestra el mensaje exacto enviado por el backend (ej: "Este usuario ya existe...")
-    setErrorMsg(err.message || "Error al registrar el usuario. Inténtalo de nuevo.");
-  } finally {
-    setSubmitting(false);
-  }
-};
+    try {
+      await onRegister(cleanNick);
+    } catch (err) {
+      setErrorMsg(err.message || "Error al registrar el usuario. Inténtalo de nuevo.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.card}>
