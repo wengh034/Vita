@@ -15,36 +15,38 @@ const SVGComponent = ({
   const finalStroke = strokeColor ?? color;
 
   return (
-    <div className='svgComp-div' style={{ padding, color, display: 'inline-flex' }}>
+    <div className='svgComp-div' style={{ padding, color, display: 'inline-flex', alignItems: 'center' }}>
       <ReactSVG
         src={src}
-        wrapper="span" // Usa span en lugar de div para evitar bloques indeseados
+        wrapper="span"
         beforeInjection={(svg) => {
 
-          // 1. Limpiar estilos internos si existen
+          // 1. Quitar la etiqueta <style> interna
           svg.querySelectorAll("style").forEach(s => s.remove());
 
-          // 2. Aplicar dimensiones exactas al tag principal
+          // 2. Establecer el tamaño al <svg> raíz
           svg.setAttribute('width', size);
           svg.setAttribute('height', size);
 
-          // 3. Iterar solo en elementos visuales internos (evitamos el nodo raíz <svg>)
+          // 3. Iterar solo en elementos dibujables
           svg.querySelectorAll("path, circle, rect, polygon, polyline, ellipse").forEach(el => {
-            
-            // Si el elemento no es explícitamente transparente, aplicamos el relleno
+
+            // RELLENO (FILL)
             if (el.getAttribute("fill") !== "none") {
               el.setAttribute("fill", finalFill);
             }
 
-            // SOLO aplicar stroke si el elemento ya tenía un stroke previo 
-            // O si no es un rectángulo contenedor con fill transparente (el cuadro horrendo)
+            // TRAZO (STROKE)
             if (strokeColor) {
-              const hasFillNone = el.getAttribute("fill") === "none";
-              const isRect = el.tagName.toLowerCase() === "rect";
-
-              // Evitamos ponerle borde al contenedor invisible
-              if (!(isRect && hasFillNone)) {
+              const isBackgroundRect = el.tagName.toLowerCase() === "rect" && el.getAttribute("fill") === "none";
+              
+              if (!isBackgroundRect) {
                 el.setAttribute("stroke", finalStroke);
+
+                // 🔴 AQUÍ ESTABA EL TRUCO: Si no tiene stroke-width explícito, le asignamos uno para que no sea 0 invisibles.
+                if (!el.getAttribute("stroke-width")) {
+                  el.setAttribute("stroke-width", "2.5");
+                }
               }
             }
 
