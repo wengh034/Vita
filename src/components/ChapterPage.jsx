@@ -238,7 +238,14 @@ export default function ChapterPage() {
             <div className="question-box">
               {currentQuestion.question}
             </div>
-            
+              <ReportButton
+              questionId={currentQuestion.idAsk}
+              questionText={currentQuestion.question}
+              chapterId={chapterId}
+              bookId={bookId}
+              selectedSubId={selectedIndex !== null ? currentQuestion.answers[selectedIndex]?.subId : null}
+              answers={currentQuestion.answers}
+                />
             <div className="answers-container">
               {currentQuestion.answers.map((ans, idx) => (
                 <button
