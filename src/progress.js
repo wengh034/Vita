@@ -32,17 +32,17 @@ export async function initDB() {
   return db;
 }
 
-// Guardar respuesta de una pregunta
+// 1. Guardar forzando conversión a Number
 export async function saveQuizAnswer({ idBook, idChapter, idAsk, status }) {
   const db = await initDB();
   const tx = db.transaction("quizProgress", "readwrite");
   const store = tx.objectStore("quizProgress");
 
   await store.put({
-    idBook,
-    idChapter,
-    idAsk,
-    status,       // 0 = incorrecto, 1 = correcto
+    idBook: Number(idBook),
+    idChapter: Number(idChapter),
+    idAsk: Number(idAsk),
+    status: Number(status), // 0 = incorrecta, 1 = correcta
     answeredAt: Date.now(),
   });
 
@@ -76,9 +76,8 @@ export async function getAnsweredQuestions(idChapter) {
   const db = await initDB();
   const store = db.transaction("quizProgress", "readonly").objectStore("quizProgress");
   const all = await store.getAll();
-  return all.filter(q => q.idChapter === Number(idChapter));
+  return all.filter(q => Number(q.idChapter) === Number(idChapter));
 }
-
 // IDs de preguntas respondidas
 export async function getAnsweredIds(idChapter) {
   const answered = await getAnsweredQuestions(idChapter);
@@ -195,10 +194,61 @@ export async function getWrongAnsweredIds({ idBook, idChapter }) {
   const all = await store.getAll();
 
   return all
-    .filter(q =>
-      q.idBook === idBook &&
-      q.idChapter === idChapter &&
-      q.status === 0
+    .filter(
+      (q) =>
+        Number(q.idBook) === Number(idBook) &&
+        Number(q.idChapter) === Number(idChapter) &&
+        Number(q.status) === 0
     )
-    .map(q => q.idAsk);
+    .map((q) => q.idAsk);
+}
+
+export async function updateStreak() {
+  const db = await initDB();
+  const tx = db.transaction("userStats", "readwrite");
+  const store = tx.objectStore("userStats");
+
+  const stats = (await store.get("stats")) || {
+    key: "stats",
+    atp: 15,
+    enthalpy: 0,
+    lastEnthalpyDate: null,
+  };
+
+  const now = new Date();
+  const todayStr = now.toISOString().split("T")[0]; // "YYYY-MM-DD"
+  
+  const lastDateStr = stats.lastEnthalpyDate
+    ? new Date(stats.lastEnthalpyDate).toISOString().split("T")[0]
+    : null;
+
+  // Si ya hizo un quiz hoy, mantiene la racha del día sin duplicar
+  if (lastDateStr === todayStr) {
+    await tx.done;
+    return stats.enthalpy;
+  }
+
+  // Verificar si la última actividad fue ayer
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+  let newEnthalpy = stats.enthalpy || 0;
+
+  if (lastDateStr === yesterdayStr) {
+    newEnthalpy += 1; // Continuó la racha del día anterior
+  } else {
+    newEnthalpy = 1;  // Inicia racha nueva en 1
+  }
+
+  const updatedStats = {
+    ...stats,
+    enthalpy: newEnthalpy,
+    lastEnthalpyDate: now.toISOString(),
+    key: "stats",
+  };
+
+  await store.put(updatedStats);
+  await tx.done;
+  return newEnthalpy;
 }

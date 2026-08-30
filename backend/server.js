@@ -10,7 +10,12 @@ import { requireAdmin } from "./middleware/requireAdmin.js";
 
 const app = express();
 app.set("trust proxy", 1);
-app.use(helmet());
+// app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 // ============================================================
 // LOGGING
 // ============================================================
@@ -35,6 +40,8 @@ app.use(cors({
     "https://wengh034.github.io",
     "http://localhost:5173",
   ],
+  allowedHeaders: ["Content-Type", "Authorization", "ngrok-skip-browser-warning"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
 
 app.use((req, res, next) => {

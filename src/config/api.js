@@ -1,12 +1,21 @@
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  "https://desktop-5fmemtd.tailad2723.ts.net/api";
+  "https://negation-subsoil-ramp.ngrok-free.dev/api";
 
 export async function apiFetch(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;
 
+  // Fusionamos los headers existentes con la cabecera necesaria para ngrok
+  const headers = {
+    "ngrok-skip-browser-warning": "69420", // 👈 Salta la pantalla de advertencia de ngrok
+    ...options.headers,
+  };
+
   try {
-    const response = await fetch(url, options);
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
     if (!response.ok) {
       console.error(

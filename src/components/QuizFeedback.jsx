@@ -2,7 +2,7 @@ import React from "react";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { calculateQuizATP } from "../calculateQuizATP";
-import { addUserATP } from "../progress";
+import { addUserATP, startTime } from "../progress";
 import SvgComponent from "./SvgComponent";
 import boltIcon from "../assets/icons/bolt.svg";
 import entropyIcon from "../assets/icons/entropy.svg";
@@ -23,9 +23,12 @@ export default function QuizFeedback({ questions, startTime }) {
 
 const newATP = await addUserATP(gained);
 
+    const newStreak = await updateStreak();
     
     console.log(`ATP ganado: +${gainedATP}`);
     console.log(`ATP actual: ${newATP}`);
+    console.log(`Racha actual (enthalpy): ${newStreak}`);
+
   }
 
 
