@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "../config/api.js";
 
-export default function UserAuthModal({ userStatus, userData, onRegister }) {
+export default function UserAuthModal({ userStatus, userData, onRegister, onReset }) {
   const [nickname, setNickname] = useState("");
   const [submittedNick, setSubmittedNick] = useState(""); 
   const [submitting, setSubmitting] = useState(false);
@@ -55,6 +55,15 @@ export default function UserAuthModal({ userStatus, userData, onRegister }) {
     }
   };
 
+  const handleReset = () => {
+    if (onReset) {
+      onReset();
+    } else {
+      localStorage.removeItem("vita_user_uuid");
+      window.location.reload();
+    }
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.card}>
@@ -74,7 +83,14 @@ export default function UserAuthModal({ userStatus, userData, onRegister }) {
               maxLength={20}
               required
             />
-            {errorMsg && <p style={styles.error}>{errorMsg}</p>}
+            {errorMsg && (
+              <div>
+                <p style={styles.error}>{errorMsg}</p>
+                <button type="button" onClick={handleReset} style={styles.textLink}>
+                  ¿No es tu nombre de usuario? Volver al inicio
+                </button>
+              </div>
+            )}
             <button type="submit" disabled={submitting} style={styles.button}>
               {submitting ? "Enviando..." : "Solicitar acceso"}
             </button>
@@ -96,6 +112,12 @@ export default function UserAuthModal({ userStatus, userData, onRegister }) {
             >
               Contactar por WhatsApp
             </a>
+
+            <div style={{ marginTop: "1.5rem" }}>
+              <button type="button" onClick={handleReset} style={styles.textLink}>
+                ¿No es tu nombre de usuario? Volver al inicio
+              </button>
+            </div>
           </div>
         )}
 
@@ -114,6 +136,12 @@ export default function UserAuthModal({ userStatus, userData, onRegister }) {
             >
               Soporte
             </a>
+
+            <div style={{ marginTop: "1.5rem" }}>
+              <button type="button" onClick={handleReset} style={styles.textLink}>
+                ¿No es tu nombre de usuario? Volver al inicio
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -190,6 +218,15 @@ const styles = {
   error: {
     color: "#ff5c5c",
     fontSize: "0.875rem",
-    margin: 0,
+    margin: "0 0 0.5rem 0",
+  },
+  textLink: {
+    background: "none",
+    border: "none",
+    color: "#7f5af0",
+    textDecoration: "underline",
+    cursor: "pointer",
+    fontSize: "0.875rem",
+    padding: 0,
   },
 };
