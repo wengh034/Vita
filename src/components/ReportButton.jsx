@@ -1,6 +1,7 @@
 import React from "react";
 import { apiFetch } from "../config/api.js";
-
+import SvgComponent from "./SvgComponent";
+import svgReport from "../assets/icons/flag.svg";
 export default function ReportButton({ 
   questionId, 
   questionText, 
@@ -31,15 +32,15 @@ export default function ReportButton({
 
       // 3. Formatea el mensaje con los metadatos
       const message = 
-`🚨 *REPORTE DE PREGUNTA*
+`*REPORTE DE PREGUNTA*
 ---------------------------
-📚 *Libro ID:* ${bookId || 'N/A'}
-📖 *Capítulo ID:* ${chapterId || 'N/A'}
-❓ *Pregunta ID:* ${questionId}
-📝 *Pregunta:* "${questionText}"
-🔍 *Opción seleccionada (subId ${selectedSubId ?? 'N/A'}):* "${selectedAnswerText}"
+ Libro ID: ${bookId || 'N/A'}
+ Capítulo ID: ${chapterId || 'N/A'}
+ Pregunta ID: ${questionId}
+ Pregunta: "${questionText}"
+ Opción escogida (subId ${selectedSubId ?? 'N/A'}): "${selectedAnswerText}"
 ---------------------------
-💬 *Mi consulta/error:* `;
+*Mi consulta/error:* `;
 
       // 4. Redirige de forma segura a WhatsApp en nueva pestaña
       const encodedMessage = encodeURIComponent(message);
@@ -71,10 +72,7 @@ export default function ReportButton({
       }}
       title="Reportar esta pregunta por WhatsApp"
     >
-      <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>
-        flag
-      </span>
-      <span>Reportar error</span>
+<SvgComponent src={svgReport} size="1.5rem"/>
     </button>
   );
 }
