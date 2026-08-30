@@ -115,50 +115,80 @@ export default function App() {
         return;
       }
 
-      // -------------------------------------------------------
-      // 2. VERIFICAR ESTADO DEL USUARIO
-      // -------------------------------------------------------
+// -------------------------------------------------------
+// 2. VERIFICAR ESTADO DEL USUARIO
+// -------------------------------------------------------
 
-      const storedUuid = localStorage.getItem("vita_user_uuid");
+const storedUuid = localStorage.getItem("vita_user_uuid");
 
-      if (storedUuid) {
-        try {
-          const statusRes = await apiFetch(`/users/status/${storedUuid}`);
+if (storedUuid) {
+  try {
+    const statusRes = await apiFetch(`/users/status/${storedUuid}`);
 
-          if (statusRes.ok) {
-            const userData = await statusRes.json();
-            if (cancelled) return;
+    if (statusRes.ok) {
+      const userData = await statusRes.json();
+      if (cancelled) return;
 
-            setUserStatus(userData.status);
+      setTimeout(() => {
+        if (cancelled) return;
+        setUserStatus(userData.status);
 
-            // Si el usuario NO está aprobado ('pending' o 'rejected'), no cargamos datos
-            if (userData.status !== "approved") {
-              console.log(`⚠️ Usuario en estado '${userData.status}'. Acceso restringido.`);
-              setShowLoading(false);
-              return;
-            }
-          } else {
-            // El UUID ya no existe en el backend
-            console.warn("⚠️ UUID no válido o eliminado en backend. Limpiando localStorage...");
-            localStorage.removeItem("vita_user_uuid");
-            setUserStatus(null);
-            setShowLoading(false);
-            return;
-          }
-        } catch (err) {
-          console.error("❌ Error al verificar estado de usuario:", err);
-          if (!cancelled) {
-            setConnectionError(true);
-            setShowLoading(false);
-          }
-          return;
+        if (userData.status !== "approved") {
+          console.log(`⚠️ Usuario en estado '${userData.status}'. Acceso restringido.`);
+          setShowLoading(false);
         }
-      } else {
-        // No hay UUID guardado -> Requiere registro
-        console.log("👤 No hay usuario registrado localmente.");
+      }, 0);
+
+      if (userData.status !== "approved") return;
+
+    } else if (statusRes.status === 404) {
+      // 🟢 EL UUID NO EXISTE EN LA BASE DE DATOS (ej. intento con otro dispo o DB reiniciada)
+      console.warn("⚠️ UUID no encontrado en servidor. Limpiando sesión local...");
+      localStorage.removeItem("vita_user_uuid");
+      
+      setTimeout(() => {
+        if (!cancelled) {
+          setUserStatus(null); // Muestra la pantalla de registro limpio
+          setShowLoading(false);
+        }
+      }, 0);
+      return;
+    } else {
+      throw new Error(`Error en servidor: HTTP ${statusRes.status}`);
+    }
+  } catch (err) {
+    // Si el error fue un 404 proveniente de apiFetch
+    if (err.status === 404) {
+      console.warn("⚠️ UUID no válido (404). Limpiando localStorage...");
+      localStorage.removeItem("vita_user_uuid");
+      setTimeout(() => {
+        if (!cancelled) {
+          setUserStatus(null);
+          setShowLoading(false);
+        }
+      }, 0);
+      return;
+    }
+
+    // 🔴 SOLO si falla la red o el backend da 500 se muestra la pantalla de error de conexión
+    console.error("❌ Error de red/servidor al verificar estado:", err);
+    setTimeout(() => {
+      if (!cancelled) {
+        setConnectionError(true);
         setShowLoading(false);
-        return;
       }
+    }, 0);
+    return;
+  }
+} else {
+  // No hay UUID guardado -> Registro limpio
+  setTimeout(() => {
+    if (!cancelled) {
+      setShowLoading(false);
+    }
+  }, 0);
+  return;
+}
 
       // -------------------------------------------------------
       // 3. CARGAR DATOS (Solo para usuarios APROBADOS)

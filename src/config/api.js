@@ -18,22 +18,33 @@ export async function apiFetch(endpoint, options = {}) {
     });
 
     if (!response.ok) {
-      console.error(
-        "API error:",
-        response.status,
-        response.statusText,
-        url
-      );
+      // Intentamos leer el mensaje JSON enviado por el backend
+      let serverErrorMessage = "";
+      try {
+        const errorData = await response.json();
+        serverErrorMessage = errorData.error || errorData.message || "";
+      } catch (e) {
+        // Si la respuesta no era JSON, dejamos la cadena vacía
+      }
 
-      throw new Error(
-        `API error ${response.status}: ${response.statusText}`
-      );
+      // Preparamos el mensaje de error final
+      const finalMessage = serverErrorMessage || `API error ${response.status}: ${response.statusText}`;
+
+      console.warn(`⚠️ Respuesta HTTP ${response.status} en ${endpoint}:`, finalMessage);
+
+      // Creamos el error y le adjuntamos el status HTTP exacto (400, 404, etc.)
+      const error = new Error(finalMessage);
+      error.status = response.status;
+      throw error;
     }
 
     return response;
 
   } catch (error) {
-    console.error("API fetch failed:", error);
+    // Si la llamada fetch falló por falta de conexión completa a internet o ngrok caído
+    if (!error.status) {
+      console.error("❌ Fallo crítico de red/conexión:", error);
+    }
     throw error;
   }
 }
