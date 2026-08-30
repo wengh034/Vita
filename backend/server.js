@@ -140,36 +140,44 @@ async function generateUniqueIntUuid() {
 }
 
 // Endpoint de Registro de Usuario
-app.post("/api/users/register", (req, res) => {
-  const { nickname, deviceUuid } = req.body;
+api.post("/users/register", async (req, res, next) => {
+  try {
+    const { nickname, deviceUuid } = req.body;
 
-  if (!nickname || !deviceUuid) {
-    return res.status(400).json({ error: "Faltan datos requeridos." });
-  }
+    if (!nickname || !deviceUuid) {
+      return res.status(400).json({ error: "Faltan datos requeridos." });
+    }
 
-  // 1. Buscar si el nickname ya existe en la base de datos
-  const existingUser = db.prepare("SELECT * FROM users WHERE nickname = ?").get(nickname);
+    // 1. Buscar si el nickname ya existe en la tabla "Users"
+    const existingUser = await db.get("SELECT * FROM Users WHERE nickname = ?", [nickname]);
 
-  if (existingUser) {
-    // 🟢 CASO A: El nickname existe Y pertenece a este MISMO dispositivo (re-intento/re-consultar)
-    if (existingUser.device_uuid === deviceUuid) {
-      return res.json({ 
-        status: existingUser.status,
-        nickname: existingUser.nickname 
+    if (existingUser) {
+      // 🟢 CASO A: Coincide nickname y uuid (re-intento/re-consulta)
+      if (existingUser.uuid === deviceUuid) {
+        return res.json({ 
+          status: existingUser.status,
+          nickname: existingUser.nickname 
+        });
+      }
+
+      // 🔴 CASO B: El nickname pertenece a otro dispositivo
+      return res.status(400).json({ 
+        error: "Este nombre de usuario ya está registrado en otro dispositivo." 
       });
     }
 
-    // 🔴 CASO B: El nickname pertenece a OTRO dispositivo
-    return res.status(400).json({ 
-      error: "Este nombre de usuario ya está registrado en otro dispositivo." 
-    });
+    // 🟢 CASO C: Registro nuevo
+    const now = new Date().toISOString();
+    await db.run(
+      "INSERT INTO Users (nickname, uuid, status, created_at) VALUES (?, ?, 'pending', ?)",
+      [nickname, deviceUuid, now]
+    );
+
+    return res.json({ status: "pending", nickname });
+  } catch (err) {
+    console.error("❌ Error en /users/register:", err);
+    next(err);
   }
-
-  // 🟢 CASO C: Registro de usuario nuevo
-  db.prepare("INSERT INTO users (nickname, device_uuid, status) VALUES (?, ?, 'pending')")
-    .run(nickname, deviceUuid);
-
-  return res.json({ status: "pending", nickname });
 });
 // api.post("/users/register", async (req, res) => {
 //   const { nickname, deviceUuid } = req.body || {};
