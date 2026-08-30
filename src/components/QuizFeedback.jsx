@@ -2,7 +2,7 @@ import React from "react";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { calculateQuizATP } from "../calculateQuizATP";
-import { addUserATP, startTime } from "../progress";
+import { addUserATP, updateStreak } from "../progress";
 import SvgComponent from "./SvgComponent";
 import boltIcon from "../assets/icons/bolt.svg";
 import entropyIcon from "../assets/icons/entropy.svg";
