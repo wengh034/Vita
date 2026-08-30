@@ -324,7 +324,7 @@ export default function BooksList({
                       ? "#f6722b"
                       : "#9ca3af"
                   }
-                  fillColor="none"
+                  fillColor="#000"
                 />
 
               </div>
