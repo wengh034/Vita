@@ -8,6 +8,7 @@ import {
   initDB,
   getWrongAnsweredIds
 } from "../progress";
+import ReportButton from "./ReportButton";
 import { apiFetch } from "../config/api.js";
 
 export default function ChapterPage() {
@@ -237,7 +238,7 @@ export default function ChapterPage() {
             <div className="question-box">
               {currentQuestion.question}
             </div>
-
+            
             <div className="answers-container">
               {currentQuestion.answers.map((ans, idx) => (
                 <button

@@ -598,7 +598,7 @@ api.post("/admin/questions/batch", async (req, res) => {
 
 
 // ============================================================
-// ADMIN — MATERIAS / LIBROS / CAPÍTULOS / PREGUNTAS
+// ADMIN — MATERIAS / LIBROS / CAPÍTULOS / PREGUNTAS / GLOBAL CONFIG
 // ============================================================
 
 api.get("/admin/matters", async (req, res) => {
@@ -707,6 +707,18 @@ api.get(
     res.json(rows);
   }
 );
+
+api.get("/admin/config/support-phone", async (req, res) => {
+  try {
+    const row = await db.get(
+      `SELECT value FROM SystemConfig WHERE key = 'support_phone'`
+    );
+    
+    res.json({ phone: row ? row.value : null });
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener teléfono de soporte" });
+  }
+});
 
 
 // ============================================================
@@ -972,61 +984,129 @@ api.post(
 // PREGUNTAS POR CAPÍTULO
 // ============================================================
 
-api.post(
-  "/chapters/:chapterId/asks",
-  async (req, res) => {
-    const { chapterId } = req.params;
+// api.post(
+//   "/chapters/:chapterId/asks",
+//   async (req, res) => {
+//     const { chapterId } = req.params;
 
-    try {
-      const rows = await db.all(
-        `
-        SELECT 
-          Ask.idAsk, 
-          Ask.question, 
-          Answer.answer as optionsJson
-        FROM Ask
-        JOIN Answer 
-          ON Ask.idAsk = Answer.ask
-        WHERE Ask.chapter = ?
-        `,
-        [chapterId]
-      );
+//     try {
+//       const rows = await db.all(
+//         `
+//         SELECT 
+//           Ask.idAsk, 
+//           Ask.question, 
+//           Answer.answer as optionsJson
+//         FROM Ask
+//         JOIN Answer 
+//           ON Ask.idAsk = Answer.ask
+//         WHERE Ask.chapter = ?
+//         `,
+//         [chapterId]
+//       );
 
-      const questions = rows.map((r) => {
-        const options = JSON.parse(
-          r.optionsJson || "[]"
-        );
+//       const questions = rows.map((r) => {
+//         const options = JSON.parse(
+//           r.optionsJson || "[]"
+//         );
 
-        return {
-          idAsk: r.idAsk,
-          question: r.question,
+//         return {
+//           idAsk: r.idAsk,
+//           question: r.question,
 
-          answers: options.map((opt) => ({
-            subId: opt.subId,
-            answer:
-              opt.text || opt.answer,
-            is_correct: opt.is_correct,
-            explanation:
-              opt.explanation || null,
-          })),
-        };
-      });
+//           answers: options.map((opt) => ({
+//             subId: opt.subId,
+//             answer:
+//               opt.text || opt.answer,
+//             is_correct: opt.is_correct,
+//             explanation:
+//               opt.explanation || null,
+//           })),
+//         };
+//       });
 
-      res.json(questions);
+//       res.json(questions);
 
-    } catch (err) {
-      log.error(
-        "Error obteniendo preguntas:",
-        err
-      );
+//     } catch (err) {
+//       log.error(
+//         "Error obteniendo preguntas:",
+//         err
+//       );
 
-      res.status(500).json({
-        error: "Error al obtener preguntas",
-      });
+//       res.status(500).json({
+//         error: "Error al obtener preguntas",
+//       });
+//     }
+//   }
+// );
+// ============================================================
+// PREGUNTAS POR CAPÍTULO (CORREGIDO CON FILTROS)
+// ============================================================
+
+api.post("/chapters/:chapterId/asks", async (req, res) => {
+  const { chapterId } = req.params;
+  const { include, exclude, limit } = req.body || {};
+
+  try {
+    let query = `
+      SELECT 
+        Ask.idAsk, 
+        Ask.question, 
+        Answer.answer as optionsJson
+      FROM Ask
+      JOIN Answer 
+        ON Ask.idAsk = Answer.ask
+      WHERE Ask.chapter = ?
+    `;
+
+    const params = [chapterId];
+
+    // 1. Si enviamos "include" (Modo repaso: solo estas preguntas)
+    if (Array.isArray(include) && include.length > 0) {
+      const placeholders = include.map(() => "?").join(",");
+      query += ` AND Ask.idAsk IN (${placeholders})`;
+      params.push(...include);
+    } 
+    // 2. Si enviamos "exclude" (Modo normal: omitir las ya acertadas)
+    else if (Array.isArray(exclude) && exclude.length > 0) {
+      const placeholders = exclude.map(() => "?").join(",");
+      query += ` AND Ask.idAsk NOT IN (${placeholders})`;
+      params.push(...exclude);
     }
-  }
-);
 
+    // 3. Aplicar límite si viene definido
+    if (limit && Number(limit) > 0) {
+      query += ` LIMIT ?`;
+      params.push(Number(limit));
+    }
+
+    const rows = await db.all(query, params);
+
+    const questions = rows.map((r) => {
+      const options = JSON.parse(r.optionsJson || "[]");
+
+      return {
+        idAsk: r.idAsk,
+        question: r.question,
+
+        answers: options.map((opt) => ({
+          subId: opt.subId,
+          answer: opt.text || opt.answer,
+          is_correct: opt.is_correct,
+          explanation: opt.explanation || null,
+        })),
+      };
+    });
+
+    res.json(questions);
+
+  } catch (err) {
+    log.error("Error obteniendo preguntas:", err);
+
+    res.status(500).json({
+      error: "Error al obtener preguntas",
+    });
+  }
+});
 
 // ============================================================
 // META DE CAPÍTULOS
