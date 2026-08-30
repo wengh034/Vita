@@ -10,9 +10,9 @@ import {
 } from "../progress";
 import { apiFetch } from "../config/api.js";
 
-
 export default function ChapterPage() {
   const [loadingAI, setLoadingAI] = useState(false);
+  const [fetchError, setFetchError] = useState(false); // <--- Manejo de error de red
 
   const { bookId, chapterId: chapterIdParam } = useParams();
   const chapterId = Number(chapterIdParam);
@@ -30,12 +30,11 @@ export default function ChapterPage() {
   const location = useLocation();
   const mode = location.state?.mode ?? "normal";
 
-  /* ---------- cargar preguntas ---------- */
-useEffect(() => {
-  setQuizStartTime(Date.now());
-  if (!chapterId) return;
+  const loadQuestions = async () => {
+    setFetchError(false);
+    setQuizStartTime(Date.now());
+    if (!chapterId) return;
 
-  (async () => {
     try {
       let body;
 
@@ -44,6 +43,7 @@ useEffect(() => {
           idBook: Number(bookId),
           idChapter: chapterId
         });
+
         console.log("IDs que salen de IndexedDB:", wrongIds);
 
         if (wrongIds.length === 0) {
@@ -80,38 +80,53 @@ useEffect(() => {
       setCurrentIndex(0);
     } catch (err) {
       console.error("Error cargando preguntas:", err);
+      setFetchError(true);
     }
-  })();
-}, [chapterId, mode]);
+  };
+
+  /* ---------- cargar preguntas ---------- */
+  useEffect(() => {
+    loadQuestions();
+  }, [chapterId, mode]);
+
+  if (fetchError) {
+    return (
+      <div className="game-loading" style={{ flexDirection: "column", gap: "1rem", textAlign: "center" }}>
+        <p>Error de conexión al servidor.</p>
+        <button onClick={loadQuestions} className="accept-btn">
+          Reintentar
+        </button>
+      </div>
+    );
+  }
 
   const currentQuestion = questions[currentIndex];
-  // if (!currentQuestion) return <p>Cargando preguntas...</p>; 
+
   if (!currentQuestion) {
-  return (
-    <div className="game-loading">
-      <span className="game-loader"></span>
-    </div>
-  );
-}
+    return (
+      <div className="game-loading">
+        <span className="game-loader"></span>
+      </div>
+    );
+  }
 
   const handleSelectAnswer = (idx) => {
     if (!answerSelected) setSelectedIndex(idx);
   };
-// /* ---------- comprobar respuesta ---------- */
-const handleAccept = async () => {
+
+  // /* ---------- comprobar respuesta ---------- */
+  const handleAccept = async () => {
     if (selectedIndex === null) return;
     setAnswerSelected(true);
 
     const selectedAnswerObj = currentQuestion.answers[selectedIndex];
 
-    // Verificamos que exista subId
     if (!selectedAnswerObj || selectedAnswerObj.subId === undefined) {
       console.error("El objeto de respuesta no contiene 'subId':", selectedAnswerObj);
       return;
     }
 
     try {
-      // 1. Verificar respuesta
       const res = await apiFetch(
         `/asks/${currentQuestion.idAsk}/check`,
         {
@@ -135,7 +150,6 @@ const handleAccept = async () => {
         )
       );
 
-      // Guardamos la respuesta en IndexedDB asegurando que status sea numérico (1 o 0)
       await saveQuizAnswer({
         idBook: Number(bookId),
         idChapter: chapterId,
@@ -149,7 +163,7 @@ const handleAccept = async () => {
       } else {
         setLoadingAI(true);
         setShowFeedbackModal(true);
-try {
+        try {
           const aiRes = await apiFetch("/ai/explain-answer", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -170,9 +184,8 @@ try {
           console.error("Error al obtener explicación de IA:", aiErr);
           setFeedback("Opción incorrecta.");
         } finally {
-          setLoadingAI(false); // Libera el botón y quita el spinner siempre
+          setLoadingAI(false);
         }
-
       }
 
     } catch (err) {
@@ -181,7 +194,6 @@ try {
     }
   };
 
-  ///////////////////////////////////////////////////////////////////
   const handleNextFromModal = () => {
     setShowFeedbackModal(false);
     setSelectedIndex(null);
@@ -205,7 +217,6 @@ try {
             textDecoration: "none",
             color: "#1a1a1a",
             display: "flex",
-            // alignItems: "center",
             gap: "0.2rem",
             margin: "0.5rem",
           }}
@@ -222,10 +233,6 @@ try {
         />
       ) : (
         <div className="quiz-container">
-          {/* <div className="ilustration" style={{ height: "8rem" }}>
-            
-          </div> */}
-
           <div className="quiz-box">
             <div className="question-box">
               {currentQuestion.question}
@@ -234,7 +241,6 @@ try {
             <div className="answers-container">
               {currentQuestion.answers.map((ans, idx) => (
                 <button
-                  // key={ans.idAnswer}
                   key={ans.subId}
                   className={`answer-btn ${
                     answerSelected
@@ -263,62 +269,57 @@ try {
               </button>
             </div>
 
-{showFeedbackModal && (
-  <div
-    className="feedback-modal"
-    style={{
-      backgroundColor: currentQuestion.answers[selectedIndex]?.is_correct
-        ? "#a5ed6e" // verde si correcto
-        : "#ffb2b2", // rojo si incorrecto
-      color: currentQuestion.answers[selectedIndex]?.is_correct
-        ? "#27a745"
-        : "#ff4b4b",
-      padding: "1.5rem",
-      borderRadius: "8px",
-      textAlign: "center",
-    }}
-  >
-    <div>
-      <h2>
-        {currentQuestion.answers[selectedIndex]?.is_correct
-          ? "¡Correcto!"
-          : "¡Incorrecto!"}
-      </h2>
+            {showFeedbackModal && (
+              <div
+                className="feedback-modal"
+                style={{
+                  backgroundColor: currentQuestion.answers[selectedIndex]?.is_correct
+                    ? "#a5ed6e"
+                    : "#ffb2b2",
+                  color: currentQuestion.answers[selectedIndex]?.is_correct
+                    ? "#27a745"
+                    : "#ff4b4b",
+                  padding: "1.5rem",
+                  borderRadius: "8px",
+                  textAlign: "center",
+                }}
+              >
+                <div>
+                  <h2>
+                    {currentQuestion.answers[selectedIndex]?.is_correct
+                      ? "¡Correcto!"
+                      : "¡Incorrecto!"}
+                  </h2>
 
-      {/* Si está cargando la IA muestra indicador, sino el mensaje */}
-      {loadingAI ? (
-        <p style={{ fontStyle: "italic", opacity: 0.8 }}>
-          Generando explicación según el Karp 8va ed... (esto puede tardar unos segundos)
-          {/* <span className="scientist-loader"></span> */}
-          {/* <span className="game-loader"></span> */}
+                  {loadingAI ? (
+                    <p style={{ fontStyle: "italic", opacity: 0.8 }}>
+                      Generando explicación según el Karp 8va ed... (esto puede tardar unos segundos)
+                    </p>
+                  ) : (
+                    <p>{feedback}</p>
+                  )}
+                </div>
 
-        </p>
-      ) : (
-        <p>{feedback}</p>
-      )}
-    </div>
-
-    <button
-      onClick={handleNextFromModal}
-      disabled={loadingAI}
-      style={{
-        backgroundColor: currentQuestion.answers[selectedIndex]?.is_correct
-          ? "#27a745"
-          : "#ff4b4b",
-        color: "#fff",
-        border: "none",
-        borderRadius: "6px",
-        padding: "0.6rem 1.2rem",
-        cursor: loadingAI ? "not-allowed" : "pointer",
-        marginTop: "1rem",
-        opacity: loadingAI ? 0.6 : 1,
-      }}
-    >
-      Continuar
-    </button>
-  </div>
-)}
-
+                <button
+                  onClick={handleNextFromModal}
+                  disabled={loadingAI}
+                  style={{
+                    backgroundColor: currentQuestion.answers[selectedIndex]?.is_correct
+                      ? "#27a745"
+                      : "#ff4b4b",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "0.6rem 1.2rem",
+                    cursor: loadingAI ? "not-allowed" : "pointer",
+                    marginTop: "1rem",
+                    opacity: loadingAI ? 0.6 : 1,
+                  }}
+                >
+                  Continuar
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
