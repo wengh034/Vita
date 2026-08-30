@@ -1,9 +1,9 @@
-
+import React from 'react';
 import { ReactSVG } from 'react-svg';
 
 const SVGComponent = ({
   src,
-  className,
+  className = '',
   color = 'currentColor',
   fillColor,
   strokeColor,
@@ -15,33 +15,41 @@ const SVGComponent = ({
   const finalStroke = strokeColor ?? color;
 
   return (
-    <div className='svgComp-div' style={{ padding, color }}>
+    <div className='svgComp-div' style={{ padding, color, display: 'inline-flex' }}>
       <ReactSVG
         src={src}
-
+        wrapper="span" // Usa span en lugar de div para evitar bloques indeseados
         beforeInjection={(svg) => {
 
+          // 1. Limpiar estilos internos si existen
           svg.querySelectorAll("style").forEach(s => s.remove());
 
-          svg.querySelectorAll("*").forEach(el => {
+          // 2. Aplicar dimensiones exactas al tag principal
+          svg.setAttribute('width', size);
+          svg.setAttribute('height', size);
 
+          // 3. Iterar solo en elementos visuales internos (evitamos el nodo raíz <svg>)
+          svg.querySelectorAll("path, circle, rect, polygon, polyline, ellipse").forEach(el => {
+            
+            // Si el elemento no es explícitamente transparente, aplicamos el relleno
             if (el.getAttribute("fill") !== "none") {
               el.setAttribute("fill", finalFill);
             }
 
-            // if (el.getAttribute("stroke")) {
-            //   el.setAttribute("stroke", finalStroke);
-            // }
-            // aplicar stroke siempre si se especifica
+            // SOLO aplicar stroke si el elemento ya tenía un stroke previo 
+            // O si no es un rectángulo contenedor con fill transparente (el cuadro horrendo)
             if (strokeColor) {
-              el.setAttribute("stroke", finalStroke);
+              const hasFillNone = el.getAttribute("fill") === "none";
+              const isRect = el.tagName.toLowerCase() === "rect";
+
+              // Evitamos ponerle borde al contenedor invisible
+              if (!(isRect && hasFillNone)) {
+                el.setAttribute("stroke", finalStroke);
+              }
             }
 
             el.removeAttribute("class");
           });
-
-          svg.setAttribute('width', size);
-          svg.setAttribute('height', size);
 
         }}
       />
