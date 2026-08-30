@@ -44,6 +44,7 @@ useEffect(() => {
           idBook: Number(bookId),
           idChapter: chapterId
         });
+        console.log("IDs que salen de IndexedDB:", wrongIds);
 
         if (wrongIds.length === 0) {
           setShowQuizFeedback(true);
