@@ -10,8 +10,8 @@ import SVGComponent from "./SvgComponent";
 import { getUserStats } from "../progress";
 import GameRenderer from "./GamesRenderer";
 import vitaLogo from "../assets/icons/vita-logo.svg";
-import fireIcon from "../assets/icons/fire.svg";
-import boltIcon from "../assets/icons/bolt.svg";
+import fireIcon from "../assets/icons/fire_2.svg";
+import flashIcon from "../assets/icons/flash.svg";
 
 export default function BooksList({
   subjects,
@@ -340,7 +340,7 @@ export default function BooksList({
               <div className="header-svg">
 
                 <SVGComponent
-                  src={boltIcon}
+                  src={flashIcon}
                   size="0.9em"
                   strokeColor="#7f5af0"
                   fillColor="#a684ff"
