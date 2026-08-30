@@ -46,7 +46,7 @@ export default function App() {
   // USUARIO / AUTENTICACIÓN
   // =========================================================
 
-  const [userStatus, setUserStatus] = useState(null); // null, 'pending', 'approved', 'rejected'
+  const [userStatus, setUserStatus] = useState(null);
 
   // =========================================================
   // CONEXIÓN
@@ -247,26 +247,41 @@ export default function App() {
     };
   }, []);
 
-  // =========================================================
+ // =========================================================
   // HANDLER REGISTRO DE USUARIO
   // =========================================================
 
+  // Función auxiliar para obtener o generar el UUID único del dispositivo
+  const getOrCreateDeviceUuid = () => {
+    let deviceUuid = localStorage.getItem("vita_user_uuid");
+    if (!deviceUuid) {
+      deviceUuid = crypto.randomUUID(); // Genera UUID v4 estándar
+      localStorage.setItem("vita_user_uuid", deviceUuid);
+    }
+    return deviceUuid;
+  };
+
   const handleRegisterUser = async (nickname) => {
+    // 1. Obtiene o crea el UUID local en este navegador/dispositivo
+    const deviceUuid = getOrCreateDeviceUuid();
+
+    // 2. Envía nickname + deviceUuid al backend
     const res = await apiFetch("/users/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nickname }),
+      body: JSON.stringify({ nickname, deviceUuid }),
     });
 
+    const data = await res.json();
+
+    // 3. Si el servidor retorna error (ej: nickname ocupado), lanza la excepción para el modal
     if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+      throw new Error(data.error || `Error HTTP ${res.status}`);
     }
 
-    const data = await res.json();
-    localStorage.setItem("vita_user_uuid", data.uuid);
-    setUserStatus(data.status); // Pasará a 'pending'
+    // 4. Guarda confirmación del estado retornado ('pending')
+    setUserStatus(data.status);
   };
-
   // =========================================================
   // VALIDAR RACHA
   // =========================================================

@@ -1,14 +1,16 @@
 import React, { useState } from "react";
+import { apiFetch } from "../config/api.js";
 
-export default function UserAuthModal({ userStatus, userData, onRegister }) {
+export default async function UserAuthModal({ userStatus, userData, onRegister }) {
   const [nickname, setNickname] = useState("");
   // Guardamos el nick enviado para que no se pierda al cambiar de vista
   const [submittedNick, setSubmittedNick] = useState(""); 
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const ADMIN_WHATSAPP = "595991982552"; 
-
+  // const ADMIN_WHATSAPP = "595991982552"; 
+  const res = await apiFetch("/config/support-phone");
+const data = await res.json();
   // Prioridad: 1. userData del backend -> 2. Nick enviado localmente -> 3. Input actual
   const activeNick = userData?.nickname || submittedNick || nickname;
 
@@ -16,26 +18,26 @@ export default function UserAuthModal({ userStatus, userData, onRegister }) {
   const waMessage = encodeURIComponent(
     `Hola, me registré en Vita con el usuario "*${activeNick}*" y quisiera solicitar acceso a mi cuenta.`
   );
-  const waLink = `https://wa.me/${ADMIN_WHATSAPP}?text=${waMessage}`;
+  const waLink = `https://wa.me/${data.phone}?text=${waMessage}`;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const cleanNick = nickname.trim();
-    if (!cleanNick) return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const cleanNick = nickname.trim();
+  if (!cleanNick) return;
 
-    setSubmitting(true);
-    setErrorMsg("");
-    setSubmittedNick(cleanNick); // Guardamos el nick inmediatamente antes de enviar
+  setSubmitting(true);
+  setErrorMsg("");
+  setSubmittedNick(cleanNick);
 
-    try {
-      await onRegister(cleanNick);
-    } catch (err) {
-      setErrorMsg("Error al registrar el usuario. Inténtalo de nuevo.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
+  try {
+    await onRegister(cleanNick);
+  } catch (err) {
+    // Muestra el mensaje exacto enviado por el backend (ej: "Este usuario ya existe...")
+    setErrorMsg(err.message || "Error al registrar el usuario. Inténtalo de nuevo.");
+  } finally {
+    setSubmitting(false);
+  }
+};
   return (
     <div style={styles.container}>
       <div style={styles.card}>

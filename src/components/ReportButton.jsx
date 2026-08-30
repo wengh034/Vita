@@ -17,20 +17,20 @@ export default function ReportButton({
     e.stopPropagation();
 
     try {
-      // 1. Consulta el número desde la tabla SystemConfig vía API
+      // Consulta el número desde la tabla SystemConfig vía API
       const res = await apiFetch("/config/support-phone");
       const data = await res.json();
 
       if (!data.phone) {
-        alert("El canal de soporte no está configurado en este momento.");
+        console.log("El canal de soporte no está configurado en este momento.");
         return;
       }
 
-      // 2. Obtiene el texto de la opción seleccionada si la hay
+      // Obtiene el texto de la opción seleccionada si la hay
       const selectedAnswerObj = answers?.find((a) => a.subId === selectedSubId);
       const selectedAnswerText = selectedAnswerObj ? selectedAnswerObj.answer : "Ninguna seleccionada";
 
-      // 3. Formatea el mensaje con los metadatos
+      // Formatea el mensaje con los metadatos
       const message = 
 `*REPORTE DE PREGUNTA*
 ---------------------------
@@ -42,7 +42,7 @@ export default function ReportButton({
 ---------------------------
 *Mi consulta/error:* `;
 
-      // 4. Redirige de forma segura a WhatsApp en nueva pestaña
+      // Redirige de forma segura a WhatsApp en nueva pestaña
       const encodedMessage = encodeURIComponent(message);
       const whatsappUrl = `https://wa.me/${data.phone}?text=${encodedMessage}`;
 
