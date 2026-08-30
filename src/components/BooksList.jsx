@@ -317,7 +317,7 @@ export default function BooksList({
               <div className="header-svg">
 
                 <SVGComponent
-                  src={boltIcon}
+                  src={fireIcon}
                   size="0.9em"
                   strokeColor={
                     stats.enthalpy > 0
