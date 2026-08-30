@@ -228,34 +228,36 @@ useEffect(() => {
           marginTop:'1rem',
         }}>
           
-<div>
+          <div>
             <div className="atp-box"
-          style={{
-            display:"flex",
-            flexDirection:"column",
-            backgroundColor:"#f6722b",
-            height:"4rem", width:"6rem",
-            fontWeight:'600',
-            color:'#252529',
-            borderRadius:'8px',
-            padding:'0.5rem 0.3rem 0.2rem 0.3rem',
-            margin:'0 1rem ',
-            }}>ATP
-            <div style={{
-              height:'100%',
-              backgroundColor:'#252529',
-              borderRadius:'4px',
-              color:'#f6722b',
-              alignContent:'center',
-              display:'flex',
-              justifyContent:'center',
-              alignItems:'center',
-            }}>
-              <div><SvgComponent src={boltIcon} size="1.5rem"/></div>
+              style={{
+                display:"flex",
+                flexDirection:"column",
+                backgroundColor:"#f6722b",
+                height:"4rem", width:"6rem",
+                fontWeight:'600',
+                color:'#252529',
+                borderRadius:'8px',
+                padding:'0.5rem 0.3rem 0.2rem 0.3rem',
+                margin:'0 1rem ',
+              }}>ATP
+              <div style={{
+                height:'100%',
+                backgroundColor:'#252529',
+                borderRadius:'4px',
+                color:'#f6722b',
+                alignContent:'center',
+                display:'flex',
+                justifyContent:'center',
+                alignItems:'center',
+              }}>
+                <div>
+                  <SvgComponent src={boltIcon} size="1.5rem"/>
+                </div>
               <div style={{marginLeft:'0.3em'}}>+{gainedATP}</div>
               
             </div>
-            </div>
+          </div>
    <div className="entropy-box"
           style={{
             display:"flex",
