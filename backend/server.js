@@ -708,17 +708,6 @@ api.get(
   }
 );
 
-api.get("/admin/config/support-phone", async (req, res) => {
-  try {
-    const row = await db.get(
-      `SELECT value FROM SystemConfig WHERE key = 'support_phone'`
-    );
-    
-    res.json({ phone: row ? row.value : null });
-  } catch (err) {
-    res.status(500).json({ error: "Error al obtener teléfono de soporte" });
-  }
-});
 
 
 // ============================================================
@@ -1221,7 +1210,20 @@ app.use((err, req, res, next) => {
     error: "Error interno del servidor",
   });
 });
-
+// ============================================================
+// GLOBAL CONFIG
+// ============================================================
+api.get("/config/support-phone", async (req, res) => {
+  try {
+    const row = await db.get(
+      `SELECT value FROM SystemConfig WHERE key = 'support_phone'`
+    );
+    
+    res.json({ phone: row ? row.value : null });
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener teléfono de soporte" });
+  }
+});
 
 // ============================================================
 // SERVER

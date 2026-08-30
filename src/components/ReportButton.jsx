@@ -17,7 +17,7 @@ export default function ReportButton({
 
     try {
       // 1. Consulta el número desde la tabla SystemConfig vía API
-      const res = await apiFetch("/admin/config/support-phone");
+      const res = await apiFetch("/config/support-phone");
       const data = await res.json();
 
       if (!data.phone) {
