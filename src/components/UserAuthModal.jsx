@@ -58,9 +58,6 @@ export default function UserAuthModal({ userStatus, userData, onRegister, onRese
   const handleReset = () => {
     if (onReset) {
       onReset();
-    } else {
-      localStorage.removeItem("vita_user_uuid");
-      window.location.reload();
     }
   };
 

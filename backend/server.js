@@ -140,53 +140,84 @@ async function generateUniqueIntUuid() {
 }
 
 // Endpoint de Registro de Usuario
-api.post("/users/register", async (req, res) => {
-  const { nickname, deviceUuid } = req.body || {};
+app.post("/api/users/register", (req, res) => {
+  const { nickname, deviceUuid } = req.body;
 
-  if (!nickname || nickname.trim() === "") {
-    return res.status(400).json({ error: "El nombre de usuario es obligatorio" });
+  if (!nickname || !deviceUuid) {
+    return res.status(400).json({ error: "Faltan datos requeridos." });
   }
 
-  if (!deviceUuid) {
-    return res.status(400).json({ error: "Identificador de dispositivo no proporcionado" });
-  }
+  // 1. Buscar si el nickname ya existe en la base de datos
+  const existingUser = db.prepare("SELECT * FROM users WHERE nickname = ?").get(nickname);
 
-  const cleanNickname = nickname.trim();
-
-  try {
-    // 1. Verificar si el nickname ya fue registrado por alguien más
-    const existingUser = await db.get(
-      "SELECT nickname FROM Users WHERE nickname = ?",
-      [cleanNickname]
-    );
-
-    if (existingUser) {
-      // 🔒 SEGURIDAD: Jamás devolvemos el UUID existente. Recharamos la solicitud.
-      return res.status(400).json({
-        error: "Este nombre de usuario ya existe. Si es tuyo, contacta al soporte por WhatsApp."
+  if (existingUser) {
+    // 🟢 CASO A: El nickname existe Y pertenece a este MISMO dispositivo (re-intento/re-consultar)
+    if (existingUser.device_uuid === deviceUuid) {
+      return res.json({ 
+        status: existingUser.status,
+        nickname: existingUser.nickname 
       });
     }
 
-    // 2. Formato de fecha actual
-    const fechaActual = new Date().toISOString();
-
-    // 3. Registrar el nuevo usuario atado a su deviceUuid
-    await db.run(
-      "INSERT INTO Users (uuid, nickname, status, created_at) VALUES (?, ?, 'pending', ?)",
-      [deviceUuid, cleanNickname, fechaActual]
-    );
-
-    return res.status(201).json({
-      uuid: deviceUuid,
-      nickname: cleanNickname,
-      status: "pending",
-      message: "Solicitud de acceso enviada correctamente"
+    // 🔴 CASO B: El nickname pertenece a OTRO dispositivo
+    return res.status(400).json({ 
+      error: "Este nombre de usuario ya está registrado en otro dispositivo." 
     });
-  } catch (err) {
-    console.error("Error al registrar usuario:", err);
-    return res.status(500).json({ error: "Error interno del servidor" });
   }
+
+  // 🟢 CASO C: Registro de usuario nuevo
+  db.prepare("INSERT INTO users (nickname, device_uuid, status) VALUES (?, ?, 'pending')")
+    .run(nickname, deviceUuid);
+
+  return res.json({ status: "pending", nickname });
 });
+// api.post("/users/register", async (req, res) => {
+//   const { nickname, deviceUuid } = req.body || {};
+
+//   if (!nickname || nickname.trim() === "") {
+//     return res.status(400).json({ error: "El nombre de usuario es obligatorio" });
+//   }
+
+//   if (!deviceUuid) {
+//     return res.status(400).json({ error: "Identificador de dispositivo no proporcionado" });
+//   }
+
+//   const cleanNickname = nickname.trim();
+
+//   try {
+//     // 1. Verificar si el nickname ya fue registrado por alguien más
+//     const existingUser = await db.get(
+//       "SELECT nickname FROM Users WHERE nickname = ?",
+//       [cleanNickname]
+//     );
+
+//     if (existingUser) {
+//       // 🔒 SEGURIDAD: Jamás devolvemos el UUID existente. Recharamos la solicitud.
+//       return res.status(400).json({
+//         error: "Este nombre de usuario ya existe. Si es tuyo, contacta al soporte por WhatsApp."
+//       });
+//     }
+
+//     // 2. Formato de fecha actual
+//     const fechaActual = new Date().toISOString();
+
+//     // 3. Registrar el nuevo usuario atado a su deviceUuid
+//     await db.run(
+//       "INSERT INTO Users (uuid, nickname, status, created_at) VALUES (?, ?, 'pending', ?)",
+//       [deviceUuid, cleanNickname, fechaActual]
+//     );
+
+//     return res.status(201).json({
+//       uuid: deviceUuid,
+//       nickname: cleanNickname,
+//       status: "pending",
+//       message: "Solicitud de acceso enviada correctamente"
+//     });
+//   } catch (err) {
+//     console.error("Error al registrar usuario:", err);
+//     return res.status(500).json({ error: "Error interno del servidor" });
+//   }
+// });
 
 // Endpoint de Validación de Estado
 api.get("/users/status/:uuid", async (req, res) => {

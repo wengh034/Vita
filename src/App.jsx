@@ -47,6 +47,7 @@ export default function App() {
   // =========================================================
 
   const [userStatus, setUserStatus] = useState(null);
+  const [userData, setUserData] = useState(null); // MODIFICACIÓN 1: Guardar la data del usuario (nickname, status)
 
   // =========================================================
   // CONEXIÓN
@@ -115,80 +116,83 @@ export default function App() {
         return;
       }
 
-// -------------------------------------------------------
-// 2. VERIFICAR ESTADO DEL USUARIO
-// -------------------------------------------------------
+      // -------------------------------------------------------
+      // 2. VERIFICAR ESTADO DEL USUARIO
+      // -------------------------------------------------------
 
-const storedUuid = localStorage.getItem("vita_user_uuid");
+      const storedUuid = localStorage.getItem("vita_user_uuid");
 
-if (storedUuid) {
-  try {
-    const statusRes = await apiFetch(`/users/status/${storedUuid}`);
+      if (storedUuid) {
+        try {
+          const statusRes = await apiFetch(`/users/status/${storedUuid}`);
 
-    if (statusRes.ok) {
-      const userData = await statusRes.json();
-      if (cancelled) return;
+          if (statusRes.ok) {
+            const data = await statusRes.json();
+            if (cancelled) return;
 
-      setTimeout(() => {
-        if (cancelled) return;
-        setUserStatus(userData.status);
+            setTimeout(() => {
+              if (cancelled) return;
+              setUserData(data); // MODIFICACIÓN 2: Guardar los datos devueltos por la API
+              setUserStatus(data.status);
 
-        if (userData.status !== "approved") {
-          console.log(`⚠️ Usuario en estado '${userData.status}'. Acceso restringido.`);
-          setShowLoading(false);
+              if (data.status !== "approved") {
+                console.log(`⚠️ Usuario en estado '${data.status}'. Acceso restringido.`);
+                setShowLoading(false);
+              }
+            }, 0);
+
+            if (data.status !== "approved") return;
+
+          } else if (statusRes.status === 404) {
+            // 🟢 EL UUID NO EXISTE EN LA BASE DE DATOS (ej. intento con otro dispo o DB reiniciada)
+            console.warn("⚠️ UUID no encontrado en servidor. Limpiando sesión local...");
+            localStorage.removeItem("vita_user_uuid");
+            
+            setTimeout(() => {
+              if (!cancelled) {
+                setUserData(null);
+                setUserStatus(null); // Muestra la pantalla de registro limpio
+                setShowLoading(false);
+              }
+            }, 0);
+            return;
+          } else {
+            throw new Error(`Error en servidor: HTTP ${statusRes.status}`);
+          }
+        } catch (err) {
+          // Si el error fue un 404 proveniente de apiFetch
+          if (err.status === 404) {
+            console.warn("⚠️ UUID no válido (404). Limpiando localStorage...");
+            localStorage.removeItem("vita_user_uuid");
+            setTimeout(() => {
+              if (!cancelled) {
+                setUserData(null);
+                setUserStatus(null);
+                setShowLoading(false);
+              }
+            }, 0);
+            return;
+          }
+
+          // 🔴 SOLO si falla la red o el backend da 500 se muestra la pantalla de error de conexión
+          console.error("❌ Error de red/servidor al verificar estado:", err);
+          setTimeout(() => {
+            if (!cancelled) {
+              setConnectionError(true);
+              setShowLoading(false);
+            }
+          }, 0);
+          return;
         }
-      }, 0);
-
-      if (userData.status !== "approved") return;
-
-    } else if (statusRes.status === 404) {
-      // 🟢 EL UUID NO EXISTE EN LA BASE DE DATOS (ej. intento con otro dispo o DB reiniciada)
-      console.warn("⚠️ UUID no encontrado en servidor. Limpiando sesión local...");
-      localStorage.removeItem("vita_user_uuid");
-      
-      setTimeout(() => {
-        if (!cancelled) {
-          setUserStatus(null); // Muestra la pantalla de registro limpio
-          setShowLoading(false);
-        }
-      }, 0);
-      return;
-    } else {
-      throw new Error(`Error en servidor: HTTP ${statusRes.status}`);
-    }
-  } catch (err) {
-    // Si el error fue un 404 proveniente de apiFetch
-    if (err.status === 404) {
-      console.warn("⚠️ UUID no válido (404). Limpiando localStorage...");
-      localStorage.removeItem("vita_user_uuid");
-      setTimeout(() => {
-        if (!cancelled) {
-          setUserStatus(null);
-          setShowLoading(false);
-        }
-      }, 0);
-      return;
-    }
-
-    // 🔴 SOLO si falla la red o el backend da 500 se muestra la pantalla de error de conexión
-    console.error("❌ Error de red/servidor al verificar estado:", err);
-    setTimeout(() => {
-      if (!cancelled) {
-        setConnectionError(true);
-        setShowLoading(false);
+      } else {
+        // No hay UUID guardado -> Registro limpio
+        setTimeout(() => {
+          if (!cancelled) {
+            setShowLoading(false);
+          }
+        }, 0);
+        return;
       }
-    }, 0);
-    return;
-  }
-} else {
-  // No hay UUID guardado -> Registro limpio
-  setTimeout(() => {
-    if (!cancelled) {
-      setShowLoading(false);
-    }
-  }, 0);
-  return;
-}
 
       // -------------------------------------------------------
       // 3. CARGAR DATOS (Solo para usuarios APROBADOS)
@@ -277,7 +281,7 @@ if (storedUuid) {
     };
   }, []);
 
- // =========================================================
+  // =========================================================
   // HANDLER REGISTRO DE USUARIO
   // =========================================================
 
@@ -310,8 +314,16 @@ if (storedUuid) {
     }
 
     // 4. Guarda confirmación del estado retornado ('pending')
+    setUserData(data);
     setUserStatus(data.status);
   };
+
+  // MODIFICACIÓN 3: Handler para resetear visualmente el estado desde el modal ("Volver al inicio")
+  const handleResetUserStatus = () => {
+    setUserStatus(null);
+    setUserData(null);
+  };
+
   // =========================================================
   // VALIDAR RACHA
   // =========================================================
@@ -468,9 +480,12 @@ if (storedUuid) {
         </div>
       ) : userStatus !== "approved" ? (
         /* 3. Si el usuario no está registrado o su estado no es 'approved' */
+        /* MODIFICACIÓN 4: Pasar props userData y onReset */
         <UserAuthModal
           userStatus={userStatus}
+          userData={userData}
           onRegister={handleRegisterUser}
+          onReset={handleResetUserStatus}
         />
       ) : isInstalled && dataLoaded ? (
         /* 4. Si está aprobado, la PWA está instalada y con datos, carga la App */
