@@ -134,6 +134,14 @@ const handleAccept = async () => {
         )
       );
 
+      // Guardamos la respuesta en IndexedDB asegurando que status sea numérico (1 o 0)
+      await saveQuizAnswer({
+        idBook: Number(bookId),
+        idChapter: chapterId,
+        idAsk: Number(currentQuestion.idAsk),
+        status: result.correct ? 1 : 0,
+      });
+
       if (result.correct) {
         setFeedback("¡Excelente respuesta!");
         setShowFeedbackModal(true);
@@ -165,13 +173,6 @@ try {
         }
 
       }
-
-      await saveQuizAnswer({
-        idBook: Number(bookId),
-        idChapter: chapterId,
-        idAsk: currentQuestion.idAsk,
-        status: result.correct ? 1 : 0,
-      });
 
     } catch (err) {
       console.error("Error en el proceso de aceptación:", err);

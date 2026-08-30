@@ -38,17 +38,17 @@ export async function saveQuizAnswer({ idBook, idChapter, idAsk, status }) {
   const tx = db.transaction("quizProgress", "readwrite");
   const store = tx.objectStore("quizProgress");
 
+  // Al usar idAsk único, .put() SOBRESCRIBE si la pregunta ya existía con status 0
   await store.put({
+    idAsk: Number(idAsk),
     idBook: Number(idBook),
     idChapter: Number(idChapter),
-    idAsk: Number(idAsk),
-    status: Number(status), // 0 = incorrecta, 1 = correcta
+    status: Number(status), // Si responde bien (1), sobrescribe el (0) anterior
     answeredAt: Date.now(),
   });
 
   await tx.done;
 }
-
 export async function getUserStats() {
   const db = await initDB();
   const tx = db.transaction("userStats", "readonly");
@@ -80,10 +80,27 @@ export async function getAnsweredQuestions(idChapter) {
 }
 // IDs de preguntas respondidas
 export async function getAnsweredIds(idChapter) {
-  const answered = await getAnsweredQuestions(idChapter);
-  return answered.map(q => q.idAsk);
-}
+  const db = await initDB();
+  const store = db.transaction("quizProgress", "readonly").objectStore("quizProgress");
+  const all = await store.getAll();
 
+  // Devuelve las preguntas que ya fueron respondidas CORRECTAMENTE (status === 1)
+  const latestMap = new Map();
+  all.forEach((item) => {
+    if (Number(item.idChapter) === Number(idChapter)) {
+      latestMap.set(Number(item.idAsk), Number(item.status));
+    }
+  });
+
+  const correctIds = [];
+  latestMap.forEach((status, idAsk) => {
+    if (status === 1) {
+      correctIds.push(idAsk);
+    }
+  });
+
+  return correctIds;
+}
 // guardar meta de capítulo
 export async function saveChapterMeta({ idChapter, total, version }) {
   const db = await initDB();
@@ -193,16 +210,27 @@ export async function getWrongAnsweredIds({ idBook, idChapter }) {
   const store = db.transaction("quizProgress", "readonly").objectStore("quizProgress");
   const all = await store.getAll();
 
-  return all
-    .filter(
-      (q) =>
-        Number(q.idBook) === Number(idBook) &&
-        Number(q.idChapter) === Number(idChapter) &&
-        Number(q.status) === 0
-    )
-    .map((q) => q.idAsk);
-}
+  // Creamos un Map por idAsk para obtener ÚNICAMENTE el estado más reciente de cada pregunta
+  const latestMap = new Map();
+  
+  all.forEach((item) => {
+    if (
+      Number(item.idBook) === Number(idBook) &&
+      Number(item.idChapter) === Number(idChapter)
+    ) {
+      latestMap.set(Number(item.idAsk), Number(item.status));
+    }
+  });
 
+  const wrongIds = [];
+  latestMap.forEach((status, idAsk) => {
+    if (status === 0) {
+      wrongIds.push(idAsk);
+    }
+  });
+
+  return wrongIds;
+}
 export async function updateStreak() {
   const db = await initDB();
   const tx = db.transaction("userStats", "readwrite");
