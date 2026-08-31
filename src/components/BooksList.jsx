@@ -371,19 +371,7 @@ export default function BooksList({
             setSelectedGame(game)
           }
         />
-        {selectedBookId && (
-  <ChaptersList
-    bookId={selectedBookId}
-    onReady={() => setChaptersReady(true)}
-    onSelectChapter={(chapter, mode = "normal") => {
 
-      navigate(`/book/${selectedBookId}/chapter/${chapter.idChapter}`, {
-        state: { mode }
-      });
-    }}
-  />
-)}
-{/* 
         {selectedBookId && (
           <ChaptersList
             bookId={selectedBookId}
@@ -396,7 +384,7 @@ export default function BooksList({
               )
             }
           />
-        )} */}
+        )}
 
       </div>
 

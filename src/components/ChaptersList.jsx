@@ -102,31 +102,20 @@ export default function ChaptersList({
   /* =========================================================
      COMENZAR CAPÍTULO
      ========================================================= */
-async function handleStartChapter(ch) {
-  const ok = await addUserATP(-5);
 
-  if (!ok) {
-    showToast("No tienes suficiente ATP");
-    return;
+  async function handleStartChapter(ch) {
+    const ok = await addUserATP(-5);
+
+    if (!ok) {
+      showToast(
+        "No tienes suficiente ATP"
+      );
+
+      return;
+    }
+
+    onSelectChapter(ch);
   }
-
-  if (onSelectChapter) {
-    onSelectChapter(ch, "normal");
-  }
-}
-  // async function handleStartChapter(ch) {
-  //   const ok = await addUserATP(-5);
-
-  //   if (!ok) {
-  //     showToast(
-  //       "No tienes suficiente ATP"
-  //     );
-
-  //     return;
-  //   }
-
-  //   onSelectChapter(ch);
-  // }
 
   /* =========================================================
      CARGAR CAPÍTULOS
@@ -252,48 +241,33 @@ async function handleStartChapter(ch) {
   /* =========================================================
      PREGUNTAS INCORRECTAS
      ========================================================= */
-const handleWrongQuestions = async (chapter) => {
-  const wrongIds = await getWrongAnsweredIds({
-    idBook: Number(bookId),
-    idChapter: chapter.idChapter,
-  });
 
-  if (wrongIds.length === 0) {
-    showToast("No hay preguntas para repasar");
-    return;
-  }
+  const handleWrongQuestions =
+    async (chapter) => {
+      const wrongIds =
+        await getWrongAnsweredIds({
+          idBook: Number(bookId),
+          idChapter:
+            chapter.idChapter,
+        });
 
-  // En lugar de navigate(), llamamos a la función delegada enviando el modo
-  if (onSelectChapter) {
-    onSelectChapter(chapter, "wrong");
-  }
-};
-  // const handleWrongQuestions =
-  //   async (chapter) => {
-  //     const wrongIds =
-  //       await getWrongAnsweredIds({
-  //         idBook: Number(bookId),
-  //         idChapter:
-  //           chapter.idChapter,
-  //       });
+      if (wrongIds.length === 0) {
+        showToast(
+          "No hay preguntas para repasar"
+        );
 
-  //     if (wrongIds.length === 0) {
-  //       showToast(
-  //         "No hay preguntas para repasar"
-  //       );
+        return;
+      }
 
-  //       return;
-  //     }
-
-  //     navigate(
-  //       `/book/${bookId}/chapter/${chapter.idChapter}`,
-  //       {
-  //         state: {
-  //           mode: "wrong",
-  //         },
-  //       }
-  //     );
-  //   };
+      navigate(
+        `/book/${bookId}/chapter/${chapter.idChapter}`,
+        {
+          state: {
+            mode: "wrong",
+          },
+        }
+      );
+    };
 
   /* =========================================================
      LOADING
