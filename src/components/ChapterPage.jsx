@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, navigate } from "react-router-dom";
 import QuizFeedback from "./QuizFeedback";
 import {
   saveQuizAnswer,
@@ -31,7 +31,7 @@ export default function ChapterPage() {
   const location = useLocation();
   const mode = location.state?.mode ?? "normal";
 
-  
+
 // Intercepta el botón Atrás del teléfono a mitad del Quiz
 useEffect(() => {
   // 1. Agregamos un estado ficticio al historial
