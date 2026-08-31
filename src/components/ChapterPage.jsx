@@ -31,6 +31,25 @@ export default function ChapterPage() {
   const location = useLocation();
   const mode = location.state?.mode ?? "normal";
 
+  
+// Intercepta el botón Atrás del teléfono a mitad del Quiz
+useEffect(() => {
+  // 1. Agregamos un estado ficticio al historial
+  window.history.pushState(null, "", window.location.href);
+
+  const handlePopState = (event) => {
+    // 2. Al presionar Atrás en el teléfono, forzamos ir al Inicio rompiendo la pila del Quiz
+    navigate("/", { replace: true });
+  };
+
+  window.addEventListener("popstate", handlePopState);
+
+  return () => {
+    window.removeEventListener("popstate", handlePopState);
+  };
+}, [navigate]);
+
+
   const loadQuestions = async () => {
     setFetchError(false);
     setQuizStartTime(Date.now());
