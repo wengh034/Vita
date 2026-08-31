@@ -35,7 +35,12 @@ export default function BooksList({
   const navigate = useNavigate();
 
   const readySentRef = useRef(false);
-
+  /* =========================================================
+   LIMPIAR HISTORIAL PARA EVITAR VOLVER AL QUIZ CON "ATRÁS"
+   ========================================================= */
+useEffect(() => {
+  window.history.replaceState(null, "", "/");
+}, []);
   /* =========================================================
      RESTAURAR SELECCIÓN
      ========================================================= */
@@ -97,12 +102,7 @@ export default function BooksList({
     setSelectedBookId(initBookId);
   }, [subjects, books]);
 
-  /* =========================================================
-   LIMPIAR HISTORIAL PARA EVITAR VOLVER AL QUIZ CON "ATRÁS"
-   ========================================================= */
-useEffect(() => {
-  window.history.replaceState(null, "", "/");
-}, []);
+
   /* =========================================================
      STATS
      ========================================================= */
