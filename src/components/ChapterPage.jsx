@@ -11,6 +11,7 @@ import {
 import ReportButton from "./ReportButton";
 import { apiFetch } from "../config/api.js";
 
+
 export default function ChapterPage() {
   const [loadingAI, setLoadingAI] = useState(false);
   const [fetchError, setFetchError] = useState(false); // <--- Manejo de error de red
