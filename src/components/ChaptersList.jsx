@@ -102,20 +102,31 @@ export default function ChaptersList({
   /* =========================================================
      COMENZAR CAPÍTULO
      ========================================================= */
+async function handleStartChapter(ch) {
+  const ok = await addUserATP(-5);
 
-  async function handleStartChapter(ch) {
-    const ok = await addUserATP(-5);
-
-    if (!ok) {
-      showToast(
-        "No tienes suficiente ATP"
-      );
-
-      return;
-    }
-
-    onSelectChapter(ch);
+  if (!ok) {
+    showToast("No tienes suficiente ATP");
+    return;
   }
+
+  if (onSelectChapter) {
+    onSelectChapter(ch, "normal");
+  }
+}
+  // async function handleStartChapter(ch) {
+  //   const ok = await addUserATP(-5);
+
+  //   if (!ok) {
+  //     showToast(
+  //       "No tienes suficiente ATP"
+  //     );
+
+  //     return;
+  //   }
+
+  //   onSelectChapter(ch);
+  // }
 
   /* =========================================================
      CARGAR CAPÍTULOS
@@ -241,33 +252,48 @@ export default function ChaptersList({
   /* =========================================================
      PREGUNTAS INCORRECTAS
      ========================================================= */
+const handleWrongQuestions = async (chapter) => {
+  const wrongIds = await getWrongAnsweredIds({
+    idBook: Number(bookId),
+    idChapter: chapter.idChapter,
+  });
 
-  const handleWrongQuestions =
-    async (chapter) => {
-      const wrongIds =
-        await getWrongAnsweredIds({
-          idBook: Number(bookId),
-          idChapter:
-            chapter.idChapter,
-        });
+  if (wrongIds.length === 0) {
+    showToast("No hay preguntas para repasar");
+    return;
+  }
 
-      if (wrongIds.length === 0) {
-        showToast(
-          "No hay preguntas para repasar"
-        );
+  // En lugar de navigate(), llamamos a la función delegada enviando el modo
+  if (onSelectChapter) {
+    onSelectChapter(chapter, "wrong");
+  }
+};
+  // const handleWrongQuestions =
+  //   async (chapter) => {
+  //     const wrongIds =
+  //       await getWrongAnsweredIds({
+  //         idBook: Number(bookId),
+  //         idChapter:
+  //           chapter.idChapter,
+  //       });
 
-        return;
-      }
+  //     if (wrongIds.length === 0) {
+  //       showToast(
+  //         "No hay preguntas para repasar"
+  //       );
 
-      navigate(
-        `/book/${bookId}/chapter/${chapter.idChapter}`,
-        {
-          state: {
-            mode: "wrong",
-          },
-        }
-      );
-    };
+  //       return;
+  //     }
+
+  //     navigate(
+  //       `/book/${bookId}/chapter/${chapter.idChapter}`,
+  //       {
+  //         state: {
+  //           mode: "wrong",
+  //         },
+  //       }
+  //     );
+  //   };
 
   /* =========================================================
      LOADING
@@ -312,7 +338,6 @@ if (loading) {
           gap: "0.5rem",
           padding: "0.5rem",
           flexDirection: "column",
-          // height: "100%",
           maxHeight: "100vh",
           alignItems: "center",
           boxSizing: "border-box",
