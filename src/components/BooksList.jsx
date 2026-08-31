@@ -39,7 +39,20 @@ export default function BooksList({
    LIMPIAR HISTORIAL PARA EVITAR VOLVER AL QUIZ CON "ATRÁS"
    ========================================================= */
 useEffect(() => {
-  window.history.replaceState(null, "", "/");
+  // Empuja un estado al historial para atrapar el evento "Atrás"
+  window.history.pushState(null, "", window.location.href);
+
+  const handlePopState = () => {
+    // Si presiona el botón Atrás del teléfono estando en Inicio, 
+    // vuelve a forzar el estado actual para bloquear el retorno al quiz.
+    window.history.pushState(null, "", window.location.href);
+  };
+
+  window.addEventListener("popstate", handlePopState);
+
+  return () => {
+    window.removeEventListener("popstate", handlePopState);
+  };
 }, []);
   /* =========================================================
      RESTAURAR SELECCIÓN

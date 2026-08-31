@@ -262,7 +262,6 @@ export default function ChaptersList({
       navigate(
         `/book/${bookId}/chapter/${chapter.idChapter}`,
         {
-          replace: true,
           state: {
             mode: "wrong",
           },
