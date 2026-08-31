@@ -34,9 +34,6 @@ export default function BooksList({
 
   const navigate = useNavigate();
 
-  /*
-   * Evita avisar a App más de una vez.
-   */
   const readySentRef = useRef(false);
 
   /* =========================================================
@@ -66,10 +63,6 @@ export default function BooksList({
       ? Number(savedBookId)
       : null;
 
-    /*
-     * Si existe un libro guardado,
-     * buscamos la materia que lo contiene.
-     */
     if (initBookId != null) {
       const subjectContaining =
         subjects.find((subject) =>
@@ -84,10 +77,6 @@ export default function BooksList({
       }
     }
 
-    /*
-     * Si no tenemos libro guardado,
-     * buscamos el primero de la materia.
-     */
     if (
       initBookId == null &&
       initSubjectId != null
@@ -108,6 +97,12 @@ export default function BooksList({
     setSelectedBookId(initBookId);
   }, [subjects, books]);
 
+  /* =========================================================
+   LIMPIAR HISTORIAL PARA EVITAR VOLVER AL QUIZ CON "ATRÁS"
+   ========================================================= */
+useEffect(() => {
+  window.history.replaceState(null, "", "/");
+}, []);
   /* =========================================================
      STATS
      ========================================================= */
@@ -208,13 +203,6 @@ export default function BooksList({
       return;
     }
 
-    /*
-     * Necesitamos como mínimo:
-     *
-     * - stats disponibles
-     * - libro seleccionado
-     * - capítulos listos
-     */
     if (
       !stats ||
       !selectedBookId ||
@@ -223,12 +211,6 @@ export default function BooksList({
       return;
     }
 
-    /*
-     * Esperamos un frame antes de avisar.
-     *
-     * Esto significa que BooksList ya tuvo
-     * oportunidad de completar su render.
-     */
     requestAnimationFrame(() => {
       if (readySentRef.current) {
         return;

@@ -76,14 +76,14 @@ export default function App() {
 
   const checkConnection = async () => {
     try {
-      console.log("🌐 Comprobando conexión con backend...");
+      // console.log("🌐 Comprobando conexión con backend...");
       const res = await apiFetch("/health");
 
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
 
-      console.log("✅ Conexión con backend confirmada");
+      // console.log("✅ Conexión con backend confirmada");
       return true;
     } catch (err) {
       console.error("❌ Backend no disponible:", err);
@@ -145,7 +145,7 @@ export default function App() {
 
           } else if (statusRes.status === 404) {
             // 🟢 EL UUID NO EXISTE EN LA BASE DE DATOS (ej. intento con otro dispo o DB reiniciada)
-            console.warn("⚠️ UUID no encontrado en servidor. Limpiando sesión local...");
+            // console.warn("⚠️ UUID no encontrado en servidor. Limpiando sesión local...");
             localStorage.removeItem("vita_user_uuid");
             
             setTimeout(() => {
