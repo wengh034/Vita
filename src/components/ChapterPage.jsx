@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useLocation, navigate } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import QuizFeedback from "./QuizFeedback";
 import {
   saveQuizAnswer,
@@ -13,6 +13,7 @@ import { apiFetch } from "../config/api.js";
 
 
 export default function ChapterPage() {
+  const navigate = useNavigate();
   const [loadingAI, setLoadingAI] = useState(false);
   const [fetchError, setFetchError] = useState(false); // <--- Manejo de error de red
 
