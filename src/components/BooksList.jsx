@@ -362,7 +362,8 @@ useEffect(() => {
             }
             onSelectChapter={(chapter) =>
               navigate(
-                `/book/${selectedBookId}/chapter/${chapter.idChapter}`
+                `/book/${selectedBookId}/chapter/${chapter.idChapter}`,
+                { replace: true }
               )
             }
           />

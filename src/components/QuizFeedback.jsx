@@ -354,7 +354,7 @@ useEffect(() => {
       </div>
       
       <button
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/", { replace: true })}
         className="back-btn"
         style={{
           marginTop: "1rem",
