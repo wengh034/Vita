@@ -15,7 +15,7 @@ import { apiFetch } from "../config/api.js";
 export default function ChapterPage() {
   const navigate = useNavigate();
   const [loadingAI, setLoadingAI] = useState(false);
-  const [fetchError, setFetchError] = useState(false); // <--- Manejo de error de red
+  const [fetchError, setFetchError] = useState(false); // Manejo de error de red
 
   const { bookId, chapterId: chapterIdParam } = useParams();
   const chapterId = Number(chapterIdParam);
@@ -66,7 +66,7 @@ useEffect(() => {
           idChapter: chapterId
         });
 
-        console.log("IDs que salen de IndexedDB:", wrongIds);
+        // console.log("IDs que salen de IndexedDB:", wrongIds);
 
         if (wrongIds.length === 0) {
           setShowQuizFeedback(true);

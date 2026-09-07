@@ -1,0 +1,10 @@
+Guarda este código en la misma carpeta donde tienes tu archivo vita.db con el nombre import_questions.js.  
+Asegúrate de tener instalado el paquete de sqlite (npm install sqlite3).
+Para importar el .txt que generemos, ejecutas:
+
+node import_questions.js mis_preguntas.txt --chapter=1
+
+(Sustituyendo --chapter=1 por el idChapter correspondiente de tu tabla Chapter)
+
+
+node import_questions.js bio_y_cel__test_cap2_02_proteinas_pt3.txt --chapter=2

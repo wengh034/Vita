@@ -9,6 +9,7 @@ import {
   getAnsweredQuestions,
   addUserATP,
   getWrongAnsweredIds,
+  resetChapterProgress,
 } from "../progress";
 
 import SVGComponent from "./SvgComponent";
@@ -296,6 +297,33 @@ if (loading) {
     </div>
   );
 }
+/* =========================================================
+     REINICIAR CAPÍTULO
+     ========================================================= */
+
+  async function handleResetChapter(chapter) {
+    try {
+      // Borra las respuestas de IndexedDB para este capítulo
+      await resetChapterProgress(chapter.idChapter);
+
+      showToast("Capítulo reiniciado con éxito");
+      setShowCompletedModal(false);
+
+      // Recalcula el progreso (ahora será 0%) y actualiza el estado local
+      const newProgress = await calculateProgress(chapter.idChapter);
+      setChapters((prevChapters) =>
+        prevChapters.map((ch) =>
+          ch.idChapter === chapter.idChapter
+            ? { ...ch, progress: newProgress }
+            : ch
+        )
+      );
+    } catch (err) {
+      console.error("Error al reiniciar el capítulo:", err);
+      showToast("No se pudo reiniciar el capítulo");
+    }
+  }
+
 
   /* =========================================================
      RENDER
@@ -525,9 +553,7 @@ if (loading) {
 
             <span
               onClick={() =>
-                setShowCompletedModal(
-                  false
-                )
+                setShowCompletedModal(false)
               }
               style={{
                 display: "flex",
@@ -551,8 +577,20 @@ if (loading) {
               ¿Quieres reiniciar el capítulo?
             </p>
 
-            <button disabled>
-              Reiniciar (próximamente)
+            <button
+              style={{
+                backgroundColor: "#ef4565",
+                color: "#fff",
+                border: "none",
+                padding: "0.7rem 1rem",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "bold",
+                marginTop: "1rem",
+              }}
+              onClick={() => handleResetChapter(selectedChapter)}
+            >
+              Reiniciar capítulo
             </button>
 
           </div>

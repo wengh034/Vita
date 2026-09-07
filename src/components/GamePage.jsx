@@ -1,10 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import AminoacidMatchGame from "./minigames/aminoacidMatch";
+import NoxMatchGame from "./minigames/NoxMatchGame";
+import OxoanionMatchGame from "./minigames/oxoanionMatchGame.jsx";
 import { apiFetch } from "../config/api.js";
 
 const componentMap = {
   match_symbol: AminoacidMatchGame,
+  match_nox: NoxMatchGame,
+  match_oxoanion: OxoanionMatchGame,
 };
 
 export default function GamePage() {
@@ -25,7 +29,6 @@ export default function GamePage() {
 
         try {
           const parsed = JSON.parse(found.config_json);
-          // console.log("CONFIG:", parsed);
           setConfig(parsed);
         } catch (e) {
           console.error("config_json inválido:", e);
@@ -33,7 +36,14 @@ export default function GamePage() {
       });
   }, [subjectId, moduleSlug]);
 
-  if (!module || !config) return <p>Cargando...</p>;
+  // Pantalla de carga
+  if (!module || !config) {
+    return (
+      <div className="game-loading">
+        <span className="game-loader"></span>
+      </div>
+    );
+  }
 
   const Component = componentMap[module.component_type];
 
@@ -42,5 +52,5 @@ export default function GamePage() {
     return <p>Tipo no soportado</p>;
   }
 
-return <Component config={config} atpReward={module.atp_reward} />;
+  return <Component config={config} atpReward={module.atp_reward} />;
 }

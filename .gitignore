@@ -16,7 +16,9 @@ node_modules
 dist
 dist-ssr
 *.local
-
+# Ignorar carpetas backend y backup
+backend/
+backup/
 
 # Editor directories and files
 .vscode/*

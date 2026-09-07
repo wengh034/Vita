@@ -31,6 +31,11 @@ import "./responsive.css";
 export default function App() {
 
   // =========================================================
+  // MODO DEV (Añadido para pruebas locales)
+  // =========================================================
+  const isDevMode = localStorage.getItem("vita_dev_mode") === "true";
+
+  // =========================================================
   // DATOS
   // =========================================================
 
@@ -445,13 +450,13 @@ export default function App() {
 
   return (
     <>
-      {/* 1. Prioridad: Si hay error de conexión se muestra el OfflinePage directamente */}
-      {connectionError ? (
+      {/* 1. Prioridad: Si hay error de conexión se muestra el OfflinePage directamente (excepto en dev) */}
+      {connectionError && !isDevMode ? (
         <OfflinePage
           onRetry={retryConnection}
           isRetrying={retryingConnection}
         />
-      ) : showLoading ? (
+      ) : showLoading && !isDevMode ? (
         /* 2. Si sigue cargando y no hay error, muestra el loader morado */
         <div
           style={{
@@ -478,17 +483,16 @@ export default function App() {
             Vita
           </div>
         </div>
-      ) : userStatus !== "approved" ? (
+      ) : userStatus !== "approved" && !isDevMode ? (
         /* 3. Si el usuario no está registrado o su estado no es 'approved' */
-        /* MODIFICACIÓN 4: Pasar props userData y onReset */
         <UserAuthModal
           userStatus={userStatus}
           userData={userData}
           onRegister={handleRegisterUser}
           onReset={handleResetUserStatus}
         />
-      ) : isInstalled && dataLoaded ? (
-        /* 4. Si está aprobado, la PWA está instalada y con datos, carga la App */
+      ) : (isInstalled && dataLoaded) || isDevMode ? (
+        /* 4. Si está aprobado, la PWA está instalada y con datos, carga la App (forzado si isDevMode es true) */
         <Router basename="/Vita">
           <Routes>
             <Route

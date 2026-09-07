@@ -231,6 +231,19 @@ export async function getWrongAnsweredIds({ idBook, idChapter }) {
 
   return wrongIds;
 }
+export async function resetChapterProgress(idChapter) {
+  const db = await initDB();
+  const tx = db.transaction("quizProgress", "readwrite");
+  const store = tx.objectStore("quizProgress");
+  const index = store.index("byChapter");
+
+  const keys = await index.getAllKeys(Number(idChapter));
+  for (const key of keys) {
+    await store.delete(key);
+  }
+
+  await tx.done;
+}
 export async function updateStreak() {
   const db = await initDB();
   const tx = db.transaction("userStats", "readwrite");

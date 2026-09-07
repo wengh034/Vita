@@ -1,11 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
-// import dotenv from "dotenv";
+import dotenv from "dotenv";
 
-//dotenv.config();
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+dotenv.config();
 
 export async function explainWrongAnswer({ question, selectedAnswer, correctAnswer, bookId, chapterNum }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("❌ ERROR CRÍTICO: GEMINI_API_KEY no está definida en el archivo .env");
+    return { success: false, explanation: "Error de configuración en el servidor." };
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
   const envKey = `GEMINI_FILE_BOOK_${bookId}_CAP_${chapterNum}`;
   const chapterUri = process.env[envKey];
 
@@ -16,6 +22,7 @@ export async function explainWrongAnswer({ question, selectedAnswer, correctAnsw
   }
 
   const contents = [];
+
   if (chapterUri) {
     contents.push({
       fileData: {
@@ -30,10 +37,10 @@ Pregunta: "${question}"
 Opción elegida por el alumno (INCORRECTA): "${selectedAnswer}"
 Opción correcta (VERDADERA): "${correctAnswer}"
 
-Instrucción: Explica en 15 a 25 palabras por qué "${selectedAnswer}" es una opción incorrecta.
+Instrucción: Explica en 15 a 30 palabras por qué "${selectedAnswer}" es una opción incorrecta.
 `;
 
-  contents.push(prompt);
+  contents.push({ text: prompt });
 
   const systemInstruction = `
 Eres un tutor de examen para una pantalla móvil pequeña.
@@ -41,20 +48,22 @@ Eres un tutor de examen para una pantalla móvil pequeña.
 Reglas obligatorias de formato:
 - Comienza la respuesta NOMBRANDO DIRECTAMENTE a la opción elegida o personaje.
 - NUNCA uses introducciones como "Según el texto", "Hola", o "Esta opción es incorrecta porque".
-- Escribe exactamente 1 oración completa (entre 15 y 25 palabras).
+- Escribe exactamente 1 oración completa explicativa.
+- Al final de la respuesta, incluye entre corchetes el número de página IMPRESO que figura en las esquinas del libro (NUNCA el número de página del archivo PDF). Ejemplo: "[pág. 245]". Si no es visible en el fragmento, omite los corchetes.
 - Finaliza siempre con un punto final.
 `;
 
-  const model = "gemini-3.6-flash";
+  // Modelo actualizado según el requerimiento actual de la API
+  const model = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
   try {
     const apiPromise = ai.models.generateContent({
-      model,
-      contents,
+      model: model,
+      contents: contents,
       config: {
-        systemInstruction,
+        systemInstruction: systemInstruction,
         temperature: 0.1,
-        maxOutputTokens: 2000,
+        maxOutputTokens: 250,
       },
     });
 
@@ -73,7 +82,6 @@ Reglas obligatorias de formato:
   } catch (err) {
     console.error("❌ Error en Gemini API:", err.message || err);
 
-    // Detección de cuota agotada (429 / RESOURCE_EXHAUSTED / quota)
     const isQuota =
       err.status === 429 ||
       err.statusCode === 429 ||
