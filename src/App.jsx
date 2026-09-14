@@ -569,34 +569,55 @@ useEffect(() => {
   // =========================================================
   // CONTROL DEL LOADER
   // =========================================================
-
+// =========================================================
+  // CONTROL DEL LOADER (Con margen visual controlado)
+  // =========================================================
   useEffect(() => {
     if (!contentReady) return;
-
-    if (loadingFinishedRef.current) {
-      return;
-    }
+    if (loadingFinishedRef.current) return;
 
     const elapsed = performance.now() - startTimeRef.current;
-    const remaining = Math.max(0, 3000 - elapsed);
+    // Si ya pasaron los datos, damos un pequeño respiro visual controlado (ej. 800ms o lo que prefieras)
+    const remaining = Math.max(0, 800 - elapsed); 
 
     const timer = setTimeout(() => {
-      if (loadingFinishedRef.current) {
-        return;
-      }
+      if (loadingFinishedRef.current) return;
 
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          loadingFinishedRef.current = true;
-          setShowLoading(false);
-        });
+        loadingFinishedRef.current = true;
+        setShowLoading(false);
       });
     }, remaining);
 
-    return () => {
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [contentReady]);
+  // useEffect(() => {
+  //   if (!contentReady) return;
+
+  //   if (loadingFinishedRef.current) {
+  //     return;
+  //   }
+
+  //   const elapsed = performance.now() - startTimeRef.current;
+  //   const remaining = Math.max(0, 3000 - elapsed);
+
+  //   const timer = setTimeout(() => {
+  //     if (loadingFinishedRef.current) {
+  //       return;
+  //     }
+
+  //     requestAnimationFrame(() => {
+  //       requestAnimationFrame(() => {
+  //         loadingFinishedRef.current = true;
+  //         setShowLoading(false);
+  //       });
+  //     });
+  //   }, remaining);
+
+  //   return () => {
+  //     clearTimeout(timer);
+  //   };
+  // }, [contentReady]);
 
   // =========================================================
   // RENDER
