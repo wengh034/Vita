@@ -336,14 +336,16 @@ const [showBreakStreak, setShowBreakStreak] = useState(false);
   // =========================================================
   // VALIDAR RACHA
   // =========================================================
-    useEffect(() => {
-    if (!serverDate) return;
-    
-    // Ejecutamos la validación que ya tienes
+// =========================================================
+  // VALIDAR RACHA (Blindado para móviles)
+  // =========================================================
+  useEffect(() => {
     const checkAndValidateStreak = async () => {
-      const wasStreakBroken = await validateStreak(serverDate); 
-      // Nota: Asegúrate de que tu función validateStreak en 'streakValidation.js' 
-      // retorne true si la racha se reseteó por inactividad, o maneja una bandera local.
+      // Si serverDate aún no llega, usamos la fecha local del dispositivo como respaldo inmediato
+      const dateToUse = serverDate || new Date().toISOString();
+      
+      const wasStreakBroken = await validateStreak(dateToUse);
+      
       if (wasStreakBroken) {
         setShowBreakStreak(true);
       }
