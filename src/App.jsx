@@ -103,182 +103,101 @@ const [showBreakStreak, setShowBreakStreak] = useState(false);
   // =========================================================
   // ARRANQUE DE LA APLICACIÓN
   // =========================================================
-
-  useEffect(() => {
+useEffect(() => {
     let cancelled = false;
 
     const startApp = async () => {
       console.log("🚀 Iniciando Vita...");
 
-      // -------------------------------------------------------
-      // 1. COMPROBAR BACKEND
-      // -------------------------------------------------------
-
       const connected = await checkConnection();
-
       if (cancelled) return;
 
       if (!connected) {
-        console.log("🔴 Vita iniciada sin conexión con el backend");
         setConnectionError(true);
-        setShowLoading(false); // 👈 Apaga el loader para mostrar la vista de error
+        setShowLoading(false);
         return;
       }
-
-      // -------------------------------------------------------
-      // 2. VERIFICAR ESTADO DEL USUARIO
-      // -------------------------------------------------------
 
       const storedUuid = localStorage.getItem("vita_user_uuid");
 
       if (storedUuid) {
         try {
           const statusRes = await apiFetch(`/users/status/${storedUuid}`);
-
           if (statusRes.ok) {
             const data = await statusRes.json();
             if (cancelled) return;
-
-            setTimeout(() => {
-              if (cancelled) return;
-              setUserData(data); // MODIFICACIÓN 2: Guardar los datos devueltos por la API
-              setUserStatus(data.status);
-
-              if (data.status !== "approved") {
-                console.log(`⚠️ Usuario en estado '${data.status}'. Acceso restringido.`);
-                setShowLoading(false);
-              }
-            }, 0);
-
-            if (data.status !== "approved") return;
-
+            setUserData(data);
+            setUserStatus(data.status);
+            if (data.status !== "approved") {
+              setShowLoading(false);
+              return;
+            }
           } else if (statusRes.status === 404) {
-            // 🟢 EL UUID NO EXISTE EN LA BASE DE DATOS (ej. intento con otro dispo o DB reiniciada)
-            // console.warn("⚠️ UUID no encontrado en servidor. Limpiando sesión local...");
             localStorage.removeItem("vita_user_uuid");
-            
-            setTimeout(() => {
-              if (!cancelled) {
-                setUserData(null);
-                setUserStatus(null); // Muestra la pantalla de registro limpio
-                setShowLoading(false);
-              }
-            }, 0);
-            return;
-          } else {
-            throw new Error(`Error en servidor: HTTP ${statusRes.status}`);
-          }
-        } catch (err) {
-          // Si el error fue un 404 proveniente de apiFetch
-          if (err.status === 404) {
-            console.warn("⚠️ UUID no válido (404). Limpiando localStorage...");
-            localStorage.removeItem("vita_user_uuid");
-            setTimeout(() => {
-              if (!cancelled) {
-                setUserData(null);
-                setUserStatus(null);
-                setShowLoading(false);
-              }
-            }, 0);
-            return;
-          }
-
-          // 🔴 SOLO si falla la red o el backend da 500 se muestra la pantalla de error de conexión
-          console.error("❌ Error de red/servidor al verificar estado:", err);
-          setTimeout(() => {
             if (!cancelled) {
-              setConnectionError(true);
+              setUserData(null);
+              setUserStatus(null);
               setShowLoading(false);
             }
-          }, 0);
+            return;
+          }
+        } catch (err) {
+          if (!cancelled) {
+            setConnectionError(true);
+            setShowLoading(false);
+          }
           return;
         }
       } else {
-        // No hay UUID guardado -> Registro limpio
-        setTimeout(() => {
-          if (!cancelled) {
-            setShowLoading(false);
-          }
-        }, 0);
+        if (!cancelled) setShowLoading(false);
         return;
       }
 
       // -------------------------------------------------------
-      // 3. CARGAR DATOS (Solo para usuarios APROBADOS)
+      // CARGA PARALELA: Disparamos todo al mismo tiempo para mejorar el LCP
       // -------------------------------------------------------
-
       try {
-        console.log("📦 Cargando datos iniciales...");
+        console.log("📦 Cargando datos y fecha de servidor en paralelo...");
 
-        const [subjectsData, booksData] = await Promise.all([
-          apiFetch("/matters").then((res) => {
-            if (!res.ok) {
-              throw new Error(`Error /matters: HTTP ${res.status}`);
-            }
-            return res.json();
-          }),
+        const [subjectsRes, booksRes, dateRes] = await Promise.all([
+          apiFetch("/matters"),
+          apiFetch("/books"),
+          apiFetch("/server-date")
+        ]);
 
-          apiFetch("/books").then((res) => {
-            if (!res.ok) {
-              throw new Error(`Error /books: HTTP ${res.status}`);
-            }
-            return res.json();
-          }),
+        if (!subjectsRes.ok || !booksRes.ok || !dateRes.ok) {
+          throw new Error("Error al obtener datos iniciales del servidor");
+        }
+
+        const [subjectsData, booksData, dateData] = await Promise.all([
+          subjectsRes.json(),
+          booksRes.json(),
+          dateRes.json()
         ]);
 
         if (cancelled) return;
 
         setSubjects(subjectsData);
         setBooks(booksData);
+        setServerDate(dateData.date);
         setDataLoaded(true);
 
-        console.log("📚 Datos iniciales cargados");
-
-        // -----------------------------------------------------
-        // 4. FECHA DEL SERVIDOR
-        // -----------------------------------------------------
-
-        const dateRes = await apiFetch("/server-date");
-
-        if (!dateRes.ok) {
-          throw new Error(`Error /server-date: HTTP ${dateRes.status}`);
-        }
-
-        const dateData = await dateRes.json();
+        // Inicializaciones locales en segundo plano o simultáneas
+        await Promise.all([
+          initUserStats(),
+          syncChaptersMeta()
+        ]);
 
         if (cancelled) return;
-
-        setServerDate(dateData.date);
-
-        // -----------------------------------------------------
-        // 5. STATS LOCALES
-        // -----------------------------------------------------
-
-        await initUserStats();
-
-        if (cancelled) return;
-
-        // -----------------------------------------------------
-        // 6. SINCRONIZAR METADATA
-        // -----------------------------------------------------
-
-        await syncChaptersMeta();
-
-        if (cancelled) return;
-
-        // -----------------------------------------------------
-        // 7. LISTO
-        // -----------------------------------------------------
 
         setContentReady(true);
+        console.log("🚀 Vita lista y sincronizada");
 
-        console.log("🚀 Vita lista");
       } catch (err) {
         console.error("❌ Error durante la inicialización:", err);
-
         if (!cancelled) {
           setConnectionError(true);
-          setShowLoading(false); // 👈 Apaga el loader en caso de excepción en la carga
+          setShowLoading(false);
         }
       }
     };
@@ -289,6 +208,191 @@ const [showBreakStreak, setShowBreakStreak] = useState(false);
       cancelled = true;
     };
   }, []);
+  // useEffect(() => {
+  //   let cancelled = false;
+
+  //   const startApp = async () => {
+  //     console.log("🚀 Iniciando Vita...");
+
+  //     // -------------------------------------------------------
+  //     // 1. COMPROBAR BACKEND
+  //     // -------------------------------------------------------
+
+  //     const connected = await checkConnection();
+
+  //     if (cancelled) return;
+
+  //     if (!connected) {
+  //       console.log("🔴 Vita iniciada sin conexión con el backend");
+  //       setConnectionError(true);
+  //       setShowLoading(false); // 👈 Apaga el loader para mostrar la vista de error
+  //       return;
+  //     }
+
+  //     // -------------------------------------------------------
+  //     // 2. VERIFICAR ESTADO DEL USUARIO
+  //     // -------------------------------------------------------
+
+  //     const storedUuid = localStorage.getItem("vita_user_uuid");
+
+  //     if (storedUuid) {
+  //       try {
+  //         const statusRes = await apiFetch(`/users/status/${storedUuid}`);
+
+  //         if (statusRes.ok) {
+  //           const data = await statusRes.json();
+  //           if (cancelled) return;
+
+  //           setTimeout(() => {
+  //             if (cancelled) return;
+  //             setUserData(data); // MODIFICACIÓN 2: Guardar los datos devueltos por la API
+  //             setUserStatus(data.status);
+
+  //             if (data.status !== "approved") {
+  //               console.log(`⚠️ Usuario en estado '${data.status}'. Acceso restringido.`);
+  //               setShowLoading(false);
+  //             }
+  //           }, 0);
+
+  //           if (data.status !== "approved") return;
+
+  //         } else if (statusRes.status === 404) {
+  //           // 🟢 EL UUID NO EXISTE EN LA BASE DE DATOS (ej. intento con otro dispo o DB reiniciada)
+  //           // console.warn("⚠️ UUID no encontrado en servidor. Limpiando sesión local...");
+  //           localStorage.removeItem("vita_user_uuid");
+            
+  //           setTimeout(() => {
+  //             if (!cancelled) {
+  //               setUserData(null);
+  //               setUserStatus(null); // Muestra la pantalla de registro limpio
+  //               setShowLoading(false);
+  //             }
+  //           }, 0);
+  //           return;
+  //         } else {
+  //           throw new Error(`Error en servidor: HTTP ${statusRes.status}`);
+  //         }
+  //       } catch (err) {
+  //         // Si el error fue un 404 proveniente de apiFetch
+  //         if (err.status === 404) {
+  //           console.warn("⚠️ UUID no válido (404). Limpiando localStorage...");
+  //           localStorage.removeItem("vita_user_uuid");
+  //           setTimeout(() => {
+  //             if (!cancelled) {
+  //               setUserData(null);
+  //               setUserStatus(null);
+  //               setShowLoading(false);
+  //             }
+  //           }, 0);
+  //           return;
+  //         }
+
+  //         // 🔴 SOLO si falla la red o el backend da 500 se muestra la pantalla de error de conexión
+  //         console.error("❌ Error de red/servidor al verificar estado:", err);
+  //         setTimeout(() => {
+  //           if (!cancelled) {
+  //             setConnectionError(true);
+  //             setShowLoading(false);
+  //           }
+  //         }, 0);
+  //         return;
+  //       }
+  //     } else {
+  //       // No hay UUID guardado -> Registro limpio
+  //       setTimeout(() => {
+  //         if (!cancelled) {
+  //           setShowLoading(false);
+  //         }
+  //       }, 0);
+  //       return;
+  //     }
+
+  //     // -------------------------------------------------------
+  //     // 3. CARGAR DATOS (Solo para usuarios APROBADOS)
+  //     // -------------------------------------------------------
+
+  //     try {
+  //       console.log("📦 Cargando datos iniciales...");
+
+  //       const [subjectsData, booksData] = await Promise.all([
+  //         apiFetch("/matters").then((res) => {
+  //           if (!res.ok) {
+  //             throw new Error(`Error /matters: HTTP ${res.status}`);
+  //           }
+  //           return res.json();
+  //         }),
+
+  //         apiFetch("/books").then((res) => {
+  //           if (!res.ok) {
+  //             throw new Error(`Error /books: HTTP ${res.status}`);
+  //           }
+  //           return res.json();
+  //         }),
+  //       ]);
+
+  //       if (cancelled) return;
+
+  //       setSubjects(subjectsData);
+  //       setBooks(booksData);
+  //       setDataLoaded(true);
+
+  //       console.log("📚 Datos iniciales cargados");
+
+  //       // -----------------------------------------------------
+  //       // 4. FECHA DEL SERVIDOR
+  //       // -----------------------------------------------------
+
+  //       const dateRes = await apiFetch("/server-date");
+
+  //       if (!dateRes.ok) {
+  //         throw new Error(`Error /server-date: HTTP ${dateRes.status}`);
+  //       }
+
+  //       const dateData = await dateRes.json();
+
+  //       if (cancelled) return;
+
+  //       setServerDate(dateData.date);
+
+  //       // -----------------------------------------------------
+  //       // 5. STATS LOCALES
+  //       // -----------------------------------------------------
+
+  //       await initUserStats();
+
+  //       if (cancelled) return;
+
+  //       // -----------------------------------------------------
+  //       // 6. SINCRONIZAR METADATA
+  //       // -----------------------------------------------------
+
+  //       await syncChaptersMeta();
+
+  //       if (cancelled) return;
+
+  //       // -----------------------------------------------------
+  //       // 7. LISTO
+  //       // -----------------------------------------------------
+
+  //       setContentReady(true);
+
+  //       console.log("🚀 Vita lista");
+  //     } catch (err) {
+  //       console.error("❌ Error durante la inicialización:", err);
+
+  //       if (!cancelled) {
+  //         setConnectionError(true);
+  //         setShowLoading(false); // 👈 Apaga el loader en caso de excepción en la carga
+  //       }
+  //     }
+  //   };
+
+  //   startApp();
+
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, []);
 
   // =========================================================
   // HANDLER REGISTRO DE USUARIO
@@ -337,14 +441,14 @@ const [showBreakStreak, setShowBreakStreak] = useState(false);
   // VALIDAR RACHA
   // =========================================================
 // =========================================================
-  // VALIDAR RACHA (Blindado para móviles)
+  // VALIDAR RACHA (Estrictamente con fecha del servidor)
   // =========================================================
   useEffect(() => {
+    // Si no hay fecha oficial del servidor, NO hacemos nada. Cero trampas de cliente.
+    if (!serverDate) return;
+    
     const checkAndValidateStreak = async () => {
-      // Si serverDate aún no llega, usamos la fecha local del dispositivo como respaldo inmediato
-      const dateToUse = serverDate || new Date().toISOString();
-      
-      const wasStreakBroken = await validateStreak(dateToUse);
+      const wasStreakBroken = await validateStreak(serverDate); 
       
       if (wasStreakBroken) {
         setShowBreakStreak(true);
@@ -353,6 +457,35 @@ const [showBreakStreak, setShowBreakStreak] = useState(false);
 
     checkAndValidateStreak();
   }, [serverDate]);
+  // useEffect(() => {
+  //   const checkAndValidateStreak = async () => {
+  //     // Si serverDate aún no llega, usamos la fecha local del dispositivo como respaldo inmediato
+  //     const dateToUse = serverDate || new Date().toISOString();
+      
+  //     const wasStreakBroken = await validateStreak(dateToUse);
+      
+  //     if (wasStreakBroken) {
+  //       setShowBreakStreak(true);
+  //     }
+  //   };
+
+  //   checkAndValidateStreak();
+  // }, [serverDate]);
+  //   useEffect(() => {
+  //   if (!serverDate) return;
+    
+  //   // Ejecutamos la validación que ya tienes
+  //   const checkAndValidateStreak = async () => {
+  //     const wasStreakBroken = await validateStreak(serverDate); 
+  //     // Nota: Asegúrate de que tu función validateStreak en 'streakValidation.js' 
+  //     // retorne true si la racha se reseteó por inactividad, o maneja una bandera local.
+  //     if (wasStreakBroken) {
+  //       setShowBreakStreak(true);
+  //     }
+  //   };
+
+  //   checkAndValidateStreak();
+  // }, [serverDate]);
 
   // useEffect(() => {
   //   if (!serverDate) return;
