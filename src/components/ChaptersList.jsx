@@ -284,7 +284,7 @@ if (loading) {
         padding: "0.5rem",
         boxSizing: "border-box",
         minHeight: "489px",
-        contain:"layout style"
+        contain:"layout"
       }}
     >
       <div
