@@ -108,6 +108,25 @@ api.get("/health", (req, res) => {
   });
 });
 
+// consulta de usuario por UUID
+app.get('/api/users/:uuid', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    
+    // Usamos la conexión 'db' que ya tienes inicializada arriba con sqlite
+    const user = await db.get('SELECT * FROM users WHERE uuid = ?', [uuid]);
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    // Retornamos el nombre del usuario
+    return res.json({ name: user.name });
+  } catch (error) {
+    console.error("Error al obtener usuario:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
 // ============================================================
 // registro y consulta de users
 // ============================================================

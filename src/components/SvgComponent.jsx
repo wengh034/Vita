@@ -10,17 +10,35 @@ const SVGComponent = ({
   size = '24px',
   padding
 }) => {
+  // Detectar si el archivo es una imagen rasterizada o GIF (webp, png, jpg, gif, etc.)
+  const isRasterImage = typeof src === 'string' && /\.(webp|png|jpe?g|gif)$/i.test(src);
 
+  if (isRasterImage) {
+    return (
+      <div className={`svgComp-div ${className}`} style={{ padding, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+        <img
+          src={src}
+          alt="Illustration"
+          style={{
+            width: size,
+            height: size,
+            objectFit: 'contain'
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Lógica original intacta para archivos SVG
   const finalFill = fillColor ?? color;
   const finalStroke = strokeColor ?? color;
 
   return (
-    <div className='svgComp-div' style={{ padding, color, display: 'inline-flex', alignItems: 'center' }}>
+    <div className={`svgComp-div ${className}`} style={{ padding, color, display: 'inline-flex', alignItems: 'center' }}>
       <ReactSVG
         src={src}
         wrapper="span"
         beforeInjection={(svg) => {
-
           // 1. Quitar la etiqueta <style> interna
           svg.querySelectorAll("style").forEach(s => s.remove());
 
@@ -43,7 +61,7 @@ const SVGComponent = ({
               if (!isBackgroundRect) {
                 el.setAttribute("stroke", finalStroke);
 
-                // 🔴 AQUÍ ESTABA EL TRUCO: Si no tiene stroke-width explícito, le asignamos uno para que no sea 0 invisibles.
+                // Si no tiene stroke-width explícito, le asignamos uno para que no sea invisible.
                 if (!el.getAttribute("stroke-width")) {
                   el.setAttribute("stroke-width", "2.5");
                 }

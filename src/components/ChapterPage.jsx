@@ -306,27 +306,37 @@ useEffect(() => {
                   textAlign: "center",
                 }}
               >
-                <div style={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "flex-end",
-                }}>
-                <ReportButton
-              questionId={currentQuestion.idAsk}
-              questionText={currentQuestion.question}
-              chapterId={chapterId}
-              bookId={bookId}
-              selectedSubId={selectedIndex !== null ? currentQuestion.answers[selectedIndex]?.subId : null}
-              answers={currentQuestion.answers}
-                />
-                </div>
-                <div>
-                  <h2>
+                {/* Contenedor flex para alinear el título y el botón en la misma línea */}
+                <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    // alignItems: "center",
+                    width: "70%",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  <h2 style={{ margin: 0 }}>
                     {currentQuestion.answers[selectedIndex]?.is_correct
                       ? "¡Correcto!"
                       : "¡Incorrecto!"}
                   </h2>
 
+                  <ReportButton
+                    questionId={currentQuestion.idAsk}
+                    questionText={currentQuestion.question}
+                    chapterId={chapterId}
+                    bookId={bookId}
+                    selectedSubId={selectedIndex !== null ? currentQuestion.answers[selectedIndex]?.subId : null}
+                    answers={currentQuestion.answers}
+                  />
+                </div>
+
+                </div>
+
+
+                <div>
                   {loadingAI ? (
                     <p style={{ fontStyle: "italic", opacity: 0.8 }}>
                       Generando explicación según el Karp 8va ed... (esto puede tardar unos segundos)
@@ -340,6 +350,7 @@ useEffect(() => {
                   onClick={handleNextFromModal}
                   disabled={loadingAI}
                   style={{
+                    fontFamily: "'Bubbleboddy', sans-serif",
                     backgroundColor: currentQuestion.answers[selectedIndex]?.is_correct
                       ? "#27a745"
                       : "#ff4b4b",

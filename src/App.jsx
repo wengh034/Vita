@@ -24,12 +24,16 @@ import GamePage from "./components/GamePage.jsx";
 import InstallPage from "./components/installPage.jsx";
 import OfflinePage from "./components/offlinePage.jsx";
 import UserAuthModal from "./components/UserAuthModal.jsx";
+import BreakStreakScreen from "./components/breakStreak.jsx";
 
 import "./App.css";
 import "./responsive.css";
 
 export default function App() {
-
+  // =========================================================
+  // estado para mostrar la pantalla de racha rota
+  // =========================================================
+const [showBreakStreak, setShowBreakStreak] = useState(false);
   // =========================================================
   // MODO DEV (Añadido para pruebas locales)
   // =========================================================
@@ -332,11 +336,26 @@ export default function App() {
   // =========================================================
   // VALIDAR RACHA
   // =========================================================
-
-  useEffect(() => {
+    useEffect(() => {
     if (!serverDate) return;
-    validateStreak(serverDate);
+    
+    // Ejecutamos la validación que ya tienes
+    const checkAndValidateStreak = async () => {
+      const wasStreakBroken = await validateStreak(serverDate); 
+      // Nota: Asegúrate de que tu función validateStreak en 'streakValidation.js' 
+      // retorne true si la racha se reseteó por inactividad, o maneja una bandera local.
+      if (wasStreakBroken) {
+        setShowBreakStreak(true);
+      }
+    };
+
+    checkAndValidateStreak();
   }, [serverDate]);
+
+  // useEffect(() => {
+  //   if (!serverDate) return;
+  //   validateStreak(serverDate);
+  // }, [serverDate]);
 
   // =========================================================
   // CONFIGURAR ALTURA DE LA APP
@@ -376,7 +395,7 @@ export default function App() {
     }
 
     const handleBeforeInstallPrompt = (event) => {
-      console.log("🔥 beforeinstallprompt DISPARADO");
+      console.log("beforeinstallprompt DISPARADO");
       event.preventDefault();
       setDeferredPrompt(event);
     };
@@ -483,6 +502,11 @@ export default function App() {
             Vita
           </div>
         </div>
+        ) : showBreakStreak ? (
+        /* Intermediario: Se muestra la pantalla de racha rota*/
+        <BreakStreakScreen 
+          onAccept={() => setShowBreakStreak(false)} 
+        />
       ) : userStatus !== "approved" && !isDevMode ? (
         /* 3. Si el usuario no está registrado o su estado no es 'approved' */
         <UserAuthModal

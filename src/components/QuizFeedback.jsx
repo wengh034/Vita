@@ -1,36 +1,49 @@
-import React from "react";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { calculateQuizATP } from "../calculateQuizATP";
 import { addUserATP, updateStreak } from "../progress";
 import SvgComponent from "./SvgComponent";
+import StreakScreen from "./streak";
 import boltIcon from "../assets/icons/bolt.svg";
-import entropyIcon from "../assets/icons/entropy.svg";
 import targetIcon from "../assets/icons/target.svg";
 import timerIcon from "../assets/icons/timer.svg";
+
+// Importaciones de ilustraciones
+import budaIlustration from "../assets/illustrations/Buddha_hand-rafiki.svg";
+import fastIlustration from "../assets/illustrations/Fast.svg";
+import fastCarIlustration from "../assets/illustrations/Fast_car-rafiki.svg";
+import brainIlustration from "../assets/illustrations/brain_sides.svg";
+import geniusIlustration from "../assets/illustrations/Genius-cuate.svg";
+import burgerIlustration from "../assets/illustrations/Hamburger.svg";
+import speedGirlIlustration from "../assets/illustrations/Speed_test-girl.svg";
+import thanosDaggerIlustration from "../assets/illustrations/Thanos_dagger.webp";
+import gFallsIlustration from "../assets/illustrations/GFBook.webp";
+import badIdeaIlustration from "../assets/illustrations/Bad_idea.svg";
+import slowAndWrongIlustration from "../assets/illustrations/Forgot_pass.svg";
+import readingIllustration from "../assets/illustrations/Stay_at_home-reading.svg";
+import dayIDefaultIllustration from "../assets/illustrations/Working_from_anywhere.svg";
+import nightIDefaultIllustration from "../assets/illustrations/Working_late.svg";
 
 export default function QuizFeedback({ questions, startTime }) {
   const hasProcessed = useRef(false);
   const navigate = useNavigate();
-  const [gainedATP, setGainedATP] = React.useState(0);
+  const [gainedATP, setGainedATP] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0); // 👈 1. Estado para almacenar la racha real
+  const [showStreak, setShowStreak] = useState(false);
 
   async function onQuizFinished({ speed, accuracy }) {
-    const gainedATP = calculateQuizATP({ speed, accuracy });
-
-    // const newATP = await addUserATP(gainedATP);
     const gained = calculateQuizATP({ speed, accuracy });
     setGainedATP(gained);
 
-const newATP = await addUserATP(gained);
-
-    const newStreak = await updateStreak();
+    const newATP = await addUserATP(gained);
+    const newStreak = await updateStreak(); //[cite: 1] Obtenemos el nuevo valor de enthalpy
     
-    console.log(`ATP ganado: +${gainedATP}`);
+    setCurrentStreak(newStreak); // 👈 2. Guardamos la racha real en el estado
+    
+    console.log(`ATP ganado: +${gained}`);
     console.log(`ATP actual: ${newATP}`);
     console.log(`Racha actual (enthalpy): ${newStreak}`);
-
   }
-
 
   if (!questions || questions.length === 0) return null;
 
@@ -48,13 +61,12 @@ const newATP = await addUserATP(gained);
   // Resultados
   const total = questions.length;
   const incorrect = questions.filter(q => q.status === 0).length;
-  const correct = total - incorrect;
-  const accuracy = Math.round((correct / total) * 100);
-
+  const accuracy = Math.round(((total - incorrect) / total) * 100);
 
   // Tiempo promedio por pregunta (en minutos)
   const avgTimeMinutes = elapsedSeconds / 60 / total;
-const avgMinutesText = avgTimeMinutes.toFixed(1);
+  const avgMinutesText = avgTimeMinutes.toFixed(1);
+
   // Velocidad
   let speed;
   if (avgTimeMinutes < 1) speed = "very_fast";
@@ -70,302 +82,315 @@ const avgMinutesText = avgTimeMinutes.toFixed(1);
   else if (incorrect === 2) precision = "ok";
   else precision = "bad";
 
-  // Mensajes
-const messages = {
-  very_fast: {
-    perfect: {
-      title: `Impecable, menos de ${avgMinutesText} min por pregunta.`,
-      subtitle: `Rápido y sin errores. Excelente base, sigue así!`
+  const getNightIllustration = (dayImg, nightImg, daySize = "20rem", nightSize = "20rem") => {
+    const currentHour = new Date().getHours();
+    const isNightTime = currentHour >= 20 || currentHour < 5;
+    
+    return {
+      src: isNightTime ? nightImg : dayImg,
+      size: isNightTime ? nightSize : daySize
+    };
+  };
+
+  // Mensajes con su respectiva ilustración dinámica
+  const messages = {
+    very_fast: {
+      perfect: { 
+        title: `¿Qué veo? ¿El ingreso?`, 
+        subtitle: `Rápido y sin errores. Excelente base !Sigue así!`,
+        illustrationData: brainIlustration
+      },
+      good: { 
+        title: `¡Cuchau!`, 
+        subtitle: `${avgMinutesText} min por pregunta. Buena base, nos vemos entre los 150.`,
+        illustrationData: fastCarIlustration
+      },
+      ok: { 
+        title: `Ritmo muy alto`, 
+        subtitle: `${avgMinutesText} min por pregunta. Tranqui, la máquina no califican velocidad.`,
+        illustrationData: getNightIllustration(dayIDefaultIllustration, nightIDefaultIllustration, "20rem", "15rem")
+      },
+      bad: { 
+        title: `Fiaaauuuuuunnn`, 
+        subtitle: `¿Eres Francesco Bernoullí? Lee con más calma.`,
+        illustrationData: fastIlustration 
+      }
     },
-    good: {
-      title: `🚀 Muy buen ritmo y precisión`,
-      subtitle: `${avgMinutesText} min por pregunta. Buena base, sigue adelante!`
+    fast: {
+      perfect: { 
+        title: `¿Qué veo? ¿El próximo techo?`, 
+        subtitle: `Por el techo en la materia ¿Entendiste? Ejem... ${avgMinutesText} min por pregunta. Rápido y muy preciso, ingredientes para el ingreso.`,
+        illustrationData: burgerIlustration
+      },
+      good: { 
+        title: `Buen ritmo`, 
+        subtitle: `${avgMinutesText} min por pregunta con buenos resultados.`,
+        illustrationData: getNightIllustration(dayIDefaultIllustration, nightIDefaultIllustration, "18rem", "18rem")
+      },
+      ok: { 
+        title: `Ritmo correcto`, 
+        subtitle: `${avgMinutesText} min por pregunta, pero con errores a mejorar.`,
+        illustrationData: getNightIllustration(dayIDefaultIllustration, nightIDefaultIllustration, "20rem", "15rem")
+      },
+      bad: { 
+        title: `Fiaaauuuuuunnn`, 
+        subtitle: `Francesco Virgolini se adelanta por la derecha de Maqueen ¡Directo a repasar! Muy rápido, conviene repasar.`,
+        illustrationData: fastIlustration 
+      }
     },
-    ok: {
-      title: `⚡ Ritmo muy alto`,
-      subtitle: `${avgMinutesText} min por pregunta. Rápido, pero con algunos errores.`
+    normal: {
+      perfect: { 
+        title: `Nos vemos entre los 150.`, 
+        subtitle: `${avgMinutesText} min por pregunta. Preciso y controlado.`,
+        illustrationData: geniusIlustration
+      },
+      good: { 
+        title: `Perfectamente equilibrado, como todo debería ser.`, 
+        subtitle: `${avgMinutesText} min por pregunta, buena comprensión.`,
+        illustrationData: thanosDaggerIlustration 
+      },
+      ok: { 
+        title: `Correcto`, 
+        subtitle: `${avgMinutesText} min por pregunta. Puedes afinar detalles.`,
+        illustrationData: budaIlustration 
+      },
+      bad: { 
+        title: `Comprensión a reforzar`, 
+        subtitle: `${avgMinutesText} min por pregunta.`,
+        illustrationData: budaIlustration 
+      }
     },
-    bad: {
-      title: `⚠️ Demasiado rápido`,
-      subtitle: `Lee con más calma.`
+    slow: {
+      perfect: { 
+        title: `Namasté`, 
+        subtitle: `${avgMinutesText} min por pregunta. Sin errores, muy relajado. ¿Quién eres, Buda?`,
+        illustrationData: budaIlustration 
+      },
+      good: { 
+        title: `Buen entendimiento`, 
+        subtitle: `${avgMinutesText} min por pregunta. Falta agilidad.`,
+        illustrationData: budaIlustration 
+      },
+      ok: { 
+        title: `Tiempo elevado`, 
+        subtitle: `${avgMinutesText} min por pregunta y varios errores.`,
+        illustrationData: slowAndWrongIlustration 
+      },
+      bad: { 
+        title: `Conviene repasar`, 
+        subtitle: `${avgMinutesText} min por pregunta.`,
+        illustrationData: badIdeaIlustration 
+      }
+    },
+    very_slow: {
+      perfect: { 
+        title: `Vamos Soos, Dipper necesita respuestas.`, 
+        subtitle: `${avgMinutesText} min por pregunta. Sin errores, pero tiempo excesivo.`,
+        illustrationData: gFallsIlustration 
+      },
+      good: { 
+        title: `Ritmo bajo`, 
+        subtitle: `${avgMinutesText} min por pregunta. Refuerza conceptos.`,
+        illustrationData: getNightIllustration(dayIDefaultIllustration, nightIDefaultIllustration, "18rem", "18rem")
+      },
+      ok: { 
+        title: `Ritmo muy bajo`, 
+        subtitle: `Errores frecuentes. Refuerza la lectura.`,
+        illustrationData: readingIllustration 
+      },
+      bad: { 
+        title: `Recomendiendo repasar.`, 
+        subtitle: `Antes de continuar.`,
+        illustrationData: badIdeaIlustration
+      }
     }
-  },
+  };
 
-  fast: {
-    perfect: {
-      title: `✅ Excelente trabajo`,
-      subtitle: `${avgMinutesText} min por pregunta. Rápido y muy preciso.`
-    },
-    good: {
-      title: `👍 Buen ritmo`,
-      subtitle: `${avgMinutesText} min por pregunta y buenos resultados.`
-    },
-    ok: {
-      title: `🙂 Ritmo correcto`,
-      subtitle: `${avgMinutesText} min por pregunta, pero con errores a mejorar.`
-    },
-    bad: {
-      title: `📘 Apurado`,
-      subtitle: `${avgMinutesText} min por pregunta. Conviene repasar.`
-    }
-  },
-
-  normal: {
-    perfect: {
-      title: `🧠 Muy sólido`,
-      subtitle: `${avgMinutesText} min por pregunta. Preciso y controlado.`
-    },
-    good: {
-      title: `👍 Buen equilibrio`,
-      subtitle: `${avgMinutesText} min por pregunta y buena comprensión.`
-    },
-    ok: {
-      title: `🙂 Correcto`,
-      subtitle: `${avgMinutesText} min por pregunta. Puedes afinar detalles.`
-    },
-    bad: {
-      title: `📘 Comprensión a reforzar`,
-      subtitle: `${avgMinutesText} min por pregunta.`
-    }
-  },
-
-  slow: {
-    perfect: {
-      title: `🧠 Muy preciso`,
-      subtitle: `${avgMinutesText} min por pregunta. Sin errores, pero algo lento.`
-    },
-    good: {
-      title: `🙂 Buen entendimiento`,
-      subtitle: `${avgMinutesText} min por pregunta. Falta agilidad.`
-    },
-    ok: {
-      title: `⏳ Tiempo elevado`,
-      subtitle: `${avgMinutesText} min por pregunta y varios errores.`
-    },
-    bad: {
-      title: `📘 Conviene repasar`,
-      subtitle: `${avgMinutesText} min por pregunta.`
-    }
-  },
-
-  very_slow: {
-    perfect: {
-      title: `⏳ Muy lento`,
-      subtitle: `${avgMinutesText} min por pregunta. Sin errores, pero excesivo.`
-    },
-    good: {
-      title: `📘 Ritmo bajo`,
-      subtitle: `${avgMinutesText} min por pregunta. Refuerza conceptos.`
-    },
-    ok: {
-      title: `📘 Ritmo muy bajo`,
-      subtitle: `Errores frecuentes. Refuerza la lectura.`
-    },
-    bad: {
-      title: `🔁 Recomendado repasar`,
-      subtitle: `Antes de continuar.`
-    }
-  }
-};
-
-
-  // const feedbackMessage = messages[speed][precision];
   const feedback = messages[speed][precision];
 
-// useEffect(() => {
-//   if (!questions || questions.length === 0) return;
-//   onQuizFinished({ speed, accuracy });
-// }, [speed, accuracy]);
-useEffect(() => {
-  if (hasProcessed.current) return;
-  if (!questions || questions.length === 0) return;
+  useEffect(() => {
+    if (hasProcessed.current) return;
+    if (!questions || questions.length === 0) return;
 
-  hasProcessed.current = true;
-  onQuizFinished({ speed, accuracy });
-}, [questions, speed, accuracy]);
+    hasProcessed.current = true;
+    onQuizFinished({ speed, accuracy });
+  }, [questions, speed, accuracy]);
+
+  if (showStreak) {
+    return <StreakScreen streakProp={currentStreak} />;
+  }
 
   return (
     <div
       className="quiz-feedback"
       style={{
         fontFamily: "Nunito, sans-serif",
-        fontOpticalSizing:'auto',
-        fontStyle: "bold",
         fontWeight: "600",
-        // backgroundColor: "#252529",
         backgroundColor: "#ffffff",
-        // color: "#1a1a1a",
-        color: "#f6722b",
+        color: "#f2a33b",
         textAlign: "center",
-        padding: "1.5rem",
+        padding: "2rem 1.5rem",
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between"
+        justifyContent: "space-between",
+        boxSizing: "border-box"
       }}
     >
-      <div style={{fontStyle:"normal",}}>
-      <h3 style={{fontWeight: "bolder", fontSize: "2.2rem"}}>
-        {/* {feedbackMessage} */}
-       <p> {feedback.title}</p>
-       
-
-      </h3>
-      <h3 style={{
-        // color:'#f1f1f1',
-        color:'#76767a',
-        }}>{feedback.subtitle}</h3> 
-<div>
+      <div style={{
+        flex: 1,
+        display: "flex",
+        justifyContent: "center",
+        maxHeight: "15rem",
+      }}>
+        <SvgComponent 
+          src={typeof feedback.illustrationData === 'string' ? feedback.illustrationData : feedback.illustrationData.src} 
+          size={feedback.illustrationData.size || "20rem"} 
+        />
+      </div>
       
+      {/* Sección de Mensajes */}
+      <div>
+        <h3 style={{
+          fontFamily: "'Bubbleboddy', sans-serif",
+          fontWeight: "bolder",
+          fontSize: "1.5rem",
+          marginTop: "-3rem"
+          }}>
+          {feedback.title}
+        </h3>
+        <h3 style={{ color: '#76767a', fontSize: "1.1rem", fontWeight: "600" }}>
+          {feedback.subtitle}
+        </h3> 
 
+        {/* Contenedor de Estadísticas */}
         <div className="stats-container" style={{
-          color: '#f1f1f1',
-          borderRadius:'8px',
-          alignContent:'center',
-          justifyContent:'center',
-          display:'flex',
-          padding:'1rem',
-          marginTop:'1rem',
+          display: 'flex',
+          gap: '0.75rem',
+          justifyContent: 'space-between',
+          width: '100%',
+          marginTop: '2rem'
         }}>
           
-          <div>
-            <div className="atp-box"
-              style={{
-                display:"flex",
-                flexDirection:"column",
-                backgroundColor:"#f6722b",
-                height:"4rem", width:"6rem",
-                fontWeight:'600',
-                color:'#252529',
-                borderRadius:'8px',
-                padding:'0.5rem 0.3rem 0.2rem 0.3rem',
-                margin:'0 1rem ',
-              }}>ATP
-              <div style={{
-                height:'100%',
-                backgroundColor:'#252529',
-                borderRadius:'4px',
-                color:'#f6722b',
-                alignContent:'center',
-                display:'flex',
-                justifyContent:'center',
-                alignItems:'center',
+          {/* ATP Box */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            backgroundColor: "#7f5af0",
+            borderRadius: "14px",
+            padding: "2px",
+            boxSizing: "border-box"
+          }}>
+            <span style={{ 
+              color: "#252529", 
+              fontSize: "0.7rem", 
+              fontWeight: "800", 
+              padding: "0.2rem 0",
+              letterSpacing: "0.5px",
+              textAlign: "center"
+            }}>ATP</span>
+            <div style={{
+              backgroundColor: '#252529',
+              color: '#7f5af0',
+              borderRadius: '12px',
+              height: '3.2rem',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              boxSizing: 'border-box',
+              margin: '0 1px'
               }}>
-                <div>
-                  <SvgComponent src={boltIcon} size="1.5rem"/>
-                </div>
-              <div style={{marginLeft:'0.3em'}}>+{gainedATP}</div>
-              
+              <SvgComponent src={boltIcon} size="1.3rem"/>
+              <span style={{ marginLeft: '0.3rem', fontWeight: 'bold', fontSize: "1.1rem" }}>+{gainedATP}</span>
             </div>
           </div>
-   <div className="entropy-box"
-          style={{
-            display:"flex",
-            flexDirection:"column",
-            backgroundColor:"#ffc800",
-            height:"4rem", width:"6rem",
-            fontWeight:'600',
-            color:'#252529',
-            borderRadius:'8px',
-            padding:'0.5rem 0.3rem 0.2rem 0.3rem',
-            margin:'0.5rem 1rem ',
-            }}>Entropía
+
+          {/* Precisión Box */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            backgroundColor: "#2cb67d",
+            borderRadius: "14px",
+            padding: "2px",
+            boxSizing: "border-box"
+          }}>
+            <span style={{ 
+              color: "#252529", 
+              fontSize: "0.7rem", 
+              fontWeight: "800", 
+              padding: "0.2rem 0",
+              letterSpacing: "0.5px",
+              textAlign: "center"
+            }}>PRECISIÓN</span>
             <div style={{
-              height:'100%',
-              backgroundColor:'#252529',
-              borderRadius:'4px',
-              color:'#ffc800',
-              alignContent:'center',
-              display:'flex',
-              justifyContent:'center',
-              alignItems:'center',
+              backgroundColor: '#252529',
+              color: '#2cb67d',
+              borderRadius: '12px',
+              height: '3.2rem',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              boxSizing: 'border-box',
+              margin: '0 1px'
             }}>
-              <div><SvgComponent src={entropyIcon} size="1.5rem"/></div>
-              <div style={{marginLeft:'0.3em'}}>-{correct}</div>
+              <SvgComponent src={targetIcon} size="1.3rem"/>
+              <span style={{ marginLeft: '0.3rem', fontWeight: 'bold', fontSize: "1.1rem" }}>{accuracy}%</span>
             </div>
-            </div>
-
-
-</div>
-
-<div>
-   <div className="accuracy-box"
-          style={{
-            display:"flex",
-            flexDirection:"column",
-            // backgroundColor:"#7ebf5c",
-            backgroundColor:"#2cb67d",
-            height:"4rem", width:"6rem",
-            fontWeight:'600',
-            color:'#252529',
-            borderRadius:'8px',
-            padding:'0.5rem 0.3rem 0.2rem 0.3rem',
-            margin:'0 1rem ',
-            
-            }}>Precisión
-            <div style={{
-              height:'100%',
-              backgroundColor:'#252529',
-              borderRadius:'4px',
-              color:'#2cb67d',
-              display:'flex',              justifyContent:'center',
-              alignItems:'center',
-              alignContent:'center',
-            }}>
-              <div><SvgComponent src={targetIcon} size="1.5rem"/></div>
-              <div style={{marginLeft:'0.3em'}}>{accuracy}%</div>
-            </div>
-            </div>
-
-
-
-         <div className="time-box"
-          style={{
-            display:"flex",
-            flexDirection:"column",
-            backgroundColor:"#7f5af0",
-            height:"4rem", width:"6rem",
-            fontWeight:'600',
-            color:'#252529',
-            borderRadius:'8px',
-            padding:'0.5rem 0.3rem 0.2rem 0.3rem',
-            margin:'0.5rem 1rem ',
-            
-            }}>Tiempo
-            <div style={{
-              height:'100%',
-              backgroundColor:'#252529',
-              borderRadius:'4px',
-              color:'#7f5af0',
-              alignContent:'center',
-              display:'flex',
-              justifyContent:'center',
-              alignItems:'center',
-            }}>
-              <div><SvgComponent src={timerIcon} size="1.5rem"/></div>
-              <div style={{marginLeft:'0.3em'}}>{timeFormatted}</div>
-
-            </div>
-            </div>
-</div>
-
           </div>
+
+          {/* Tiempo Box */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            backgroundColor: "#f2a33b",
+            borderRadius: "14px",
+            padding: "2px",
+            boxSizing: "border-box"
+          }}>
+            <span style={{ 
+              color: "#252529", 
+              fontSize: "0.7rem", 
+              fontWeight: "800", 
+              padding: "0.2rem 0",
+              letterSpacing: "0.5px",
+              textAlign: "center"
+            }}>TIEMPO</span>
+            <div style={{
+              backgroundColor: '#252529',
+              color: '#f2a33b',
+              borderRadius: '12px',
+              height: '3.2rem',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              boxSizing: 'border-box',
+              margin: '0 1px'
+            }}>
+              <SvgComponent src={timerIcon} size="1.3rem"/>
+              <span style={{ marginLeft: '0.3rem', fontWeight: 'bold', fontSize: "1.1rem" }}>{timeFormatted}</span>
+            </div>
+          </div>
+
+        </div>
       </div>
-      </div>
-      
+
+      {/* Botón Aceptar */}
       <button
-        onClick={() => navigate("/")}
-        className="back-btn"
+        onClick={() => setShowStreak(true)}
         style={{
-          marginTop: "1rem",
-          padding: "0.6rem 1.2rem",
-          borderRadius: "6px",
+          width: "100%",
+          padding: "0.8rem",
+          borderRadius: "8px",
           border: "none",
           backgroundColor: "#7f5af0",
           color: "#fffffe",
           cursor: "pointer",
           fontFamily: "Nunito, sans-serif",
-          fontWeight: "600",
+          fontWeight: "bold",
+          fontSize: "1rem"
         }}
       >
         Aceptar

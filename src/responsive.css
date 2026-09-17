@@ -140,7 +140,8 @@ a {
 /* 🔹 Mantener colores al seleccionar */
 .answer-btn.correct {
   /* background-color: #4caf50; */
-  background-color: #a5ed6e;
+  /* background-color: #a5ed6e; */
+  background-color: #61e002;
   color: #252529;
 
 }
@@ -187,7 +188,7 @@ a {
   }
 }
 
-.accept-btn {
+/* .accept-btn {
   margin-top: 1rem;
   padding: 0.5rem;
   border-radius: 6px;
@@ -202,7 +203,53 @@ a {
 .accept-btn:disabled {
   background-color: #a5d6a7;
   cursor: not-allowed;
+} */
+ .accept-btn {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 16px 24px;
+  background-color: #58cc02;
+  border: none;
+  border-bottom: 5px solid #45a002;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background-color 0.1s ease, transform 0.1s ease, border-bottom-width 0.1s ease;
 }
+
+/* Efecto al pasar el mouse (solo si NO está disabled) */
+.accept-btn:not(:disabled):hover {
+  background-color: #61e002;
+}
+
+/* Efecto de presionar (solo si NO está disabled) */
+.accept-btn:not(:disabled):active {
+  border-bottom-width: 0px;
+  transform: translateY(5px);
+}
+
+/* Estilo cuando está desactivado (gris, plano y sin movimiento) */
+.accept-btn:disabled {
+  background-color: #e5e5e5; /* O el color gris claro que prefieras */
+  border-bottom: 5px solid #d2d2d2;
+  color: #afafaf;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+
+
+
+
+
+
+
+
+
 
 .answer-btn.selected {
   background-color: #cce5ff; /* color de selección */
